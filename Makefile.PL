@@ -98,11 +98,12 @@ re-run as:
 DEATH
 
 WriteMakefile(
-    NAME	=> 'XML::Sablotron',
-    VERSION_FROM => 'Sablotron.pm', 
-    DEFINE	=> '-DPERL_POLLUTE',
-    clean     => {'FILES' => "log.xsl", },
-    %config,
+	      NAME	=> 'XML::Sablotron',
+	      VERSION_FROM => 'Sablotron.pm', 
+	      DEFINE	=> '-DPERL_POLLUTE',
+	      clean     => {'FILES' => "log.xsl", },
+	      DIR       => [qw( Sablotron )],
+	      %config,
 );
 
 use Config;

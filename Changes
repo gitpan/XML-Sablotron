@@ -33,3 +33,9 @@ Revision history for Perl extension Sablotron.
 	- Set/GetEncoding
 	- SetOutputEncoding
 	- memory leak related to the releasing of handlers fixed
+
+0.60 Wed Jun 13 15:00:00 2000
+	- introduced a subset of DOM level 1
+	  (see perldoc XML::Sablotron::DOM)
+	- new API for XML::Sablotron processor
+  	  (see perldoc XML::Sablotron)

@@ -40,18 +40,15 @@ use vars qw( $VERSION @ISA @EXPORT_OK %EXPORT_TAGS );
 require Exporter;
 require DynaLoader;
 
-@ISA = qw(Exporter DynaLoader);
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
+@ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.52';
+$VERSION = '0.60';
 
 my @functions = qw (
 SablotProcessStrings 
 SablotProcess 
 ProcessStrings 
-Process 
+Process
 );
 
 #deprecated export functions
@@ -104,6 +101,11 @@ sub RunProcessor {
     return $self->{_processor}->RunProcessor(@_);
 }
 
+sub runProcessor {
+    my $self = shift;
+    return $self->{_processor}->RunProcessor(@_);
+}
+
 sub RunProcessorTie {
     my ($self, $t, $d, $o, $params, $args, $tieclass) = @_;
     my (@params, @args);
@@ -116,7 +118,49 @@ sub RunProcessorTie {
     return $ret;
 }
 
+sub runProcessorTie {
+    my ($self, $t, $d, $o, $params, $args, $tieclass) = @_;
+    my (@params, @args);
+    eval "require $tieclass;";
+    tie @params, $tieclass, $params;
+    tie @args, $tieclass, $args;
+    my $ret =  $self->{_processor}->RunProcessor($t, $d, $o, \@params, \@args);
+    untie @params;
+    untie @args;
+    return $ret;
+}
+
+##############
+
+sub addArg {
+    my $self = shift;
+    return $self->{_processor}->addArg(@_);
+}
+
+sub addArgTree {
+    my $self = shift;
+    return $self->{_processor}->addArgTree(@_);
+}
+
+sub addParam {
+    my $self = shift;
+    return $self->{_processor}->addParam(@_);
+}
+
+
+sub process {
+    my $self = shift;
+    return $self->{_processor}->process(@_);
+}
+
+##############
+
 sub GetResultArg {
+    my $self = shift;
+    return $self->{_processor}->GetResultArg(@_);
+}
+
+sub getResultArg {
     my $self = shift;
     return $self->{_processor}->GetResultArg(@_);
 }
@@ -126,7 +170,17 @@ sub RegHandler {
     return $self->{_processor}->RegHandler(@_);
 }
 
+sub regHandler {
+    my $self = shift;
+    return $self->{_processor}->RegHandler(@_);
+}
+
 sub UnregHandler {
+    my $self = shift;
+    return $self->{_processor}->UnregHandler(@_);
+}
+
+sub unregHandler {
     my $self = shift;
     return $self->{_processor}->UnregHandler(@_);
 }
@@ -136,7 +190,17 @@ sub FreeResultArgs {
     return $self->{_processor}->FreeResultArgs(@_);
 }
 
+sub freeResultArgs {
+    my $self = shift;
+    return $self->{_processor}->FreeResultArgs(@_);
+}
+
 sub SetBase {
+    my $self = shift;
+    return $self->{_processor}->SetBase(@_);
+}
+
+sub setBase {
     my $self = shift;
     return $self->{_processor}->SetBase(@_);
 }
@@ -146,7 +210,17 @@ sub SetLog {
     return $self->{_processor}->SetLog(@_);
 }
 
+sub setLog {
+    my $self = shift;
+    return $self->{_processor}->SetLog(@_);
+}
+
 sub ClearError {
+    my $self = shift;
+    return $self->{_processor}->ClearError(@_);
+}
+
+sub clearError {
     my $self = shift;
     return $self->{_processor}->ClearError(@_);
 }
@@ -157,7 +231,17 @@ sub SetContentType {
     return $self->{_processor}->SetContentType(@_);
 }
 
+sub setContentType {
+    my $self = shift;
+    return $self->{_processor}->SetContentType(@_);
+}
+
 sub GetContentType {
+    my $self = shift;
+    return $self->{_processor}->GetContentType(@_);
+}
+
+sub getContentType {
     my $self = shift;
     return $self->{_processor}->GetContentType(@_);
 }
@@ -167,12 +251,27 @@ sub SetEncoding {
     return $self->{_processor}->SetEncoding(@_);
 }
 
+sub setEncoding {
+    my $self = shift;
+    return $self->{_processor}->SetEncoding(@_);
+}
+
 sub GetEncoding {
     my $self = shift;
     return $self->{_processor}->GetEncoding(@_);
 }
 
+sub getEncoding {
+    my $self = shift;
+    return $self->{_processor}->GetEncoding(@_);
+}
+
 sub SetOutputEncoding {
+    my $self = shift;
+    $self->{_processor}->SetOutputEncoding(@_);
+}
+
+sub setOutputEncoding {
     my $self = shift;
     $self->{_processor}->SetOutputEncoding(@_);
 }
@@ -289,8 +388,26 @@ DESTROY {
     my $self = shift;
     $self->_releaseHandlers();
     $self->_destroyProcessor();
+};
+  
+########################################
+# situation object
+
+package XML::Sablotron::Situation;
+
+sub new {
+    my $class = shift;
+    $class = ref $class || $class;
+    my $self = {};
+    bless $self, $class;
+    $self->{_handle} = _getNewSituationHandle($class);
+    return $self;
 }
 
+sub DESTROY {
+    my $self = shift;
+    $self->_releaseHandle();
+}
 
 __END__
 
@@ -306,27 +423,127 @@ XML::Sablotron - a Perl interface to the Sablotron XSLT processor
 If you prefer an object approach, you can use the object wrapper:
 
   $sab = new XML::Sablotron();
-  $sab->RunProcessor($template_url, $data_url, $output_url, 
+  $sab->runProcessor($template_url, $data_url, $output_url, 
                   \@params, \@arguments);
-  $result = $sab->GetResultArg($output_url);
+  $result = $sab->getResultArg($output_url);
+
+Note, that the Process function as well as the SablotProcess function
+are deprecated. See the L<"USAGE"> section for more details.
 
 =head1 DESCRIPTION
 
-This package is very simple interface to the Sablotron API. OK, but what
-does Sablotron mean? 
+This package is a interface to the Sablotron API. 
 
-Sablotron is an XSLT processor implemented in C++ based on the Expat XML parser.
+Sablotron is an XSLT processor implemented in C++ based on the Expat
+XML parser.
 
-If want to run this package, you need download and install
-Sablotron from the
-http://www.gingerall.cz/charlie-bin/get/webGA/act/download.act page. 
+If want to run this package, you need download and install Sablotron
+from the
+http://www.gingerall.cz/charlie-bin/get/webGA/act/download.act
+page. The Expat XML parser is needed by Sablotron
+(http://expat.sourceforge.net)
 
-You do _not_ need to download Expat, or any other Perl packages to run
+See Sablotron documentation for more details.
+
+You do _not_ need to download any other Perl packages to run
 the XML::Sablotron package.
+
+Since version 0.6 Sablotron supports very useful subset of the DOM
+specification, you may access the parsed trees, modify them and process
+them, as well as serialize them into files etc. The DOM trees are not
+dependent on the processor object, so you may use them for data or
+stylesheet caching.
 
 =head1 USAGE
 
-=head2 ProcessStrings
+Generally there are two modes how you may use Sablotron. The first
+one (and the simplest one) is based on procedural calls, the second
+one is based on object oriented interface.
+
+Note, that the original procedural interface is deprecated and should
+not be used.
+
+=head2 Procedural Model
+
+There are two methods exported from the XML::sablotron package:
+ProcessString and Process. As we mentioned above, these function are
+deprecated and shouldn't be used. Many Sablotron features as
+miscellaneous handlers, DOM model etc. are not available trough this
+interface. See the L<Exported Function> for the usage of these
+procedures. 
+
+=head2 Object Interface
+
+There are two classes defined to deal with the Sablotron processor object.
+
+C<XML::Sablotron::Processor> is a class implementing an interface to
+the Sablotron processor object. Multiple concurrent processors are
+supported, so you may use Sablotron in multithreaded programs easily.
+
+Implementation of this class contains a circular reference inside Perl
+structures, which has to be broken calling the C<_release> method. If
+you aren't going to do some hacks to this package, you don't need to
+use this mechanism directly.
+
+C<XML::Sablotron> is often the only thing you need. It's a wrapper
+around the XML::Sablotron::Processor object. The only quest of this class is to
+keep track of life-cycle of the processor, so you don't have to deal with
+a reference counting inside the processor class. All calls to this class are
+redirected to an inner instance of the XML::Sablotron::Processor object.
+
+As an addition to previous version of XML::Sablotron, there are new
+interface methods. We strongly recommend you to use that new
+methods. Previous versions used the RunProcessor method, which had
+been called with many parameters specifying XSL params, processed
+buffers and URLs. New interface methods are more intuitive to use and,
+and this is extremely important, they allow to process preparsed DOM
+document as well as the new ones.
+
+New methods are:
+
+=over 4
+
+=item * addArg
+
+=item * addArgTree
+
+=item * addParam
+
+=item * process
+
+=back
+
+See references for more.
+
+=head1 API NAME CHANGES
+
+Since the release 0.60 all API uses unique naming convention. Names
+starts with lower case letter, first letters of following words are
+capitalized. Older user don't have to panic, since old names are kept
+for the compatibility.
+
+
+
+=head1 SITUATION
+
+Since the release 0.60 there is new object (user internally in
+previous versions) used for several tasks. In this Perl module is
+represented by the XML::Sablotron::Situation package.
+
+At this time the situation is used only for error tracking, but in
+further releases its usage will become quite extensive. (It will be
+used for all handlers etc.)
+
+So far you don't have (and it is not even possible many times) to use
+the Situation object for processing the data. There is one exception
+to this. If you use the DOM interface (XML::Sablotron::DOM module),
+you have to create and use the situation object like this:
+
+ $situa = new XML::Sablotron::Situation;
+
+=head1 EXPORTED FUNCTIONS
+
+=head2 ProcessStrings - deprecated
 
 C<ProcessStrings($template, $data, $result);>
 
@@ -350,7 +567,7 @@ is filled with the desired output
 
 This function returns the Sablotron error code.
 
-=head2 Process
+=head2 Process - deprecated
 
 This function provides a more general interface to Sablotron. You may
 find its usage a little bit tricky but it offers a variety of ways how
@@ -407,54 +624,131 @@ details.
 
 This function returns the Sablotron error code.
 
-=head2 RegMessageHandler
+=head2 RegMessageHandler - canceled
 
 This function is deprecated and no longer supported. See the description of
 object interface later in this document.
 
-=head2 UnregMessageHandler
+=head2 UnregMessageHandler - canceled
 
 This function is deprecated and no longer supported. See the description of
 object interface later in this document.
 
-=head1 OBJECT INTERFACE
-
-This is a short intro for people, who like it hot. Skip this preface, 
-if you just want to use this package the "ordinary" way.
-
-There are two classes defined to deal with the Sablotron processor object.
-
-C<XML::Sablotron::Processor> is a class implementing an interface to
-the Sablotron processor object. Currently, there is no way,
-how to create more then one instance of the processor object but the use of
-multiple object should be supported soon. Usually, you don't need to
-use this class directly (except using handlers but it is a painless
-case). 
-
-Implementation of this class contains a circular reference inside Perl
-structures, which has to be broken calling the C<_release> method. If
-you aren't going to do some strange hacks, you can forget this explanation.
-
-C<XML::Sablotron> is often the only thing you need. It's a wrapper
-around the XML::Sablotron::Processor object. The only quest of this class is to
-keep track of life-cycle of the processor, so you don't have to deal with
-a reference counting inside the processor class. All calls to this class are
-redirected to an inner instance of the XML::Sablotron::Processor object.
 
 =head1 XML::Sablotron
 
-=head2 Constructor
+=head2 new
 
-The constructor of the XML::Sablotron object takes no arguments, so you can create new
-instance simply like this:
+The constructor of the XML::Sablotron object takes no arguments, so
+you can create new instance simply like this:
 
   $sab = new XML::Sablotron();
 
-=head2 RunProcessor
+=head2 addArg
 
-The RunProcessor method is analogous to the Process function.
+Add an argument to the processor. Nothing (almost) happened at the time
+of call, but this argument may be processed later by the C<process>
+function. 
 
-  $code = $sab->RunProcessor($template_uri, $data_uri, $result_uri,
+  $sab->addArg($situa, $name, $data);
+
+=over 4
+
+=item $situa
+
+The situation to be used.
+
+=item $name
+
+The name of the buffer in the "arg:" scheme.
+
+=item $data
+
+The literal XML data to be parsed and remembered.
+
+=back
+
+=head2 addArgTree
+
+Add a DOM document to the processor. This document may be processed
+later with the C<process> call.
+
+  $sab->addArgTree($situa, $name, $doc);
+
+=over 4
+
+=item $situa
+
+The situation to be used.
+
+=item $name
+
+The name of the buffer in the "arg:" scheme.
+
+=item $doc
+
+The DOM document. Must be a XML::Sablotron::DOM::Document instance.
+
+=back
+
+=head2 addParam
+
+Adds the XSL parameter to the processor. The parameter may be accessed
+later by the C<process> call.
+
+  $sab->addParam($situa, $name, $value);
+
+=over 4
+
+=item $situa
+
+The situation to be used.
+
+=item $name
+
+The name of the parameter.
+
+=item $value
+
+The value of the parameter.
+
+=back
+
+=head2 process
+
+This function starts the XSLT processing over the formerly specified
+data. Data are added to the processor using C<addArg>, C<addArgTree>
+and C<addParam> methods.
+
+  $sab->process($situa, $template_uri, $data_uri, $result_uri);
+
+=over 4
+
+=item $situa
+
+The situation to be used.
+
+=item  $template_uri 
+
+The  URI of XSL stylesheet
+
+=item  $data_uri 
+
+The URI of processed data
+
+=item  $result_uri 
+
+The a URI of destination buffer
+
+=back
+
+=head2 runProcessor
+
+The RunProcessor is the older method analogous to the Process
+function. You may find it useful, but the use of the C<process>
+method is recommended.
+
+  $code = $sab->runProcessor($template_uri, $data_uri, $result_uri,
                              $params, $buffers);
 
 where...
@@ -485,56 +779,56 @@ is a reference to array of named buffers
 
 URIs passed to this function may be from schemes supported internally
 (file:, arg:) of from any scheme handled by registered handler (see
-Handlers section).
+L<"HANDLERS"> section).
 
 Note the difference between the RunProcessor method and the Process
 function. RunProcessor doesn't return the output buffer ($result parameter
 is missing).
 
-To obtain the result buffer(s) you have to call the L<"GetResultArg"> method.
+To obtain the result buffer(s) you have to call the L<"getResultArg"> method.
 
 Example of use:
 
-  RunProcessor("arg:/template", "arg:/data", "arg:/result", 
+  $sab->runProcessor("arg:/template", "arg:/data", "arg:/result", 
           undef, 
           ["template", $template, "data", $data] );
 
-=head2 GetResultArg
+=head2 getResultArg
 
 Call this function to obtain the result buffer after processing. The goal
-of this approach is to enable multiple output buffers. This
-little inconvenience of use is not so painful hopefully.
+of this approach is to enable multiple output buffers. 
 
-  $result = $sab->GetResultArg($output_url);
+  $result = $sab->getResultArg($output_url);
 
-This method returns a desired output buffer specified by its url.
+This method returns a desired output buffer specified by its
+url. Specifying the "arg:" scheme in URI is optional.
 
-The recent example of the RunProcessor method should continue:
+The recent example of the runProcessor method should continue:
 
-  $return = $sab->GetResultArg("result");
+  $return = $sab->getResultArg("result");
 
-=head2 FreeResultArgs
+=head2 freeResultArgs
 
-  $sab->FreeResultArgs();
+  $sab->freeResultArgs();
 
 This call frees up all output buffers allocated by Sablotron. You do not
 have to call this function as these buffers are managed by the processor
 internally.
 
 Use this function to release huge chunks of memory while an instance of
-processor stays idle for a longer time, for example.
+processor stays idle for a longer time.
 
-=head2 RegHandler
+=head2 regHandler
 
-Set certain type of an external handler. The processor can use the handler for
-miscellaneous tasks such log and error messaging ...
+Set particular type of an external handler. The processor can use the
+handler for miscellaneous tasks such log and error hooking etc.
 
 For more details on handlers see the L<"HANDLERS"> section of this
 document. 
 
 There are two ways how to call the RegHandler method:
 
-  $sab->RegHandler($type, $handler);
+  $sab->regHandler($type, $handler);
 
 where...
 
@@ -553,7 +847,7 @@ is an object implementing the handler interface
 The second way allows to create anonymous handlers defined as a set of
 function calls:
 
-  $sab->RegHandler($type, { handler_stub1 => \&my_proc1,
+  $sab->regHandler($type, { handler_stub1 => \&my_proc1,
                           handlerstub2 => \&my_proc2.... });
 
 However, this form is very simple. It disallows to unregister the handler
@@ -561,65 +855,104 @@ later.
 
 For the detailed description of handler interface see the Handlers section.
 
-=head2 UnregHandler
+=head2 unregHandler
 
-  $sab->UnregHandler($type, $handler);
+  $sab->unregHandler($type, $handler);
 
 This method unregisters a registered handler.
 
 Remember, that anonymously registered handlers can't be
-unregistered. (Of course, they can be canceled but it's a little bit
-tricky).
+unregistered. 
 
-=head2 Set/GetEncoding
+=head2 set/getEncoding
 
-  $sab->SetEncoding($encoding);
-
-Calling these methods has no effect. They are valuable for
-miscellaneous handler, which may store received values together with
-the processor instance.
-
-=head2 Set/GetContentType
-
-  $sab->SetEncoding($encoding);
+  $sab->setEncoding($encoding);
 
 Calling these methods has no effect. They are valuable for
 miscellaneous handler, which may store received values together with
 the processor instance.
 
+=head2 set/getContentType
 
-=head2 SetOutputEncoding
+  $sab->setEContentType($content_type);
 
-  $sab->SetOutputEncoding($encoding);
+Calling these methods has no effect. They are valuable for
+miscellaneous handler, which may store received values together with
+the processor instance.
 
-This methos allows to override the encoding specified in the
+
+=head2 setOutputEncoding
+
+  $sab->setOutputEncoding($encoding);
+
+This methods allows to override the encoding specified in the
 <xsl:output> instruction. It enables to produce differently encoded
 outputs using one template.
 
-=head2 SetBase
+=head2 setBase
 
-  $sab->SetBase($base_url);
+  $sab->setBase($base_url);
 
 Call this method to make processor to use the C<$base_url> base URI while
 resolving any relative URI within a data or template.
 
-=head2 SetBaseForScheme
+=head2 setBaseForScheme
 
-  $sab->SetBaseForScheme($scheme, $base);
+  $sab->setBaseForScheme($scheme, $base);
 
 Like C<SetBase>, but given base URL is used only for specified scheme.
 
-=head2 SetLog
+=head2 setLog
 
-  $sab->SetLog($filename);
+  $sab->setLog($filename);
 
 This methods sets the log file name.
 
-=head2 ClearError
+=head2 clearError
 
-  $sab->ClearError();
+  $sab->clearError();
 
 This methods clears the last internal error of processor.
+
+=head1 XML::Sablotron::Situation
+
+Sablotron performs almost all operations in very special context used
+for the error tracing. This is useful for multithreaded programing or
+if you need called Sablotron in the reentrant way.
+
+The tax you have to pay for it is the need of specifying this context
+in many calls. Using DOM access to Sablotron structures requires this
+approach almost for every call.
+
+The C<XML::Sablotron::Situation> object represents the execution
+context.
+
+E.g. if you want to create new DOM document, you have to do following:
+
+  $situa = new XML::Sablotron::Situation();
+  $doc = new XML::Sablotron::DOM::Document(SITUATION => $situa);
+
+The situation object supports several methods you may use if you want
+to get more details on error happened.
+
+(Note: In upcoming releases the Situation object will be used for
+more tasks like handler registering etc.)
+
+=head2 getDOMExceptionCode
+
+Returns the last error code.
+
+=head2 getDOMExceptionMessage
+
+Returns the string characterizing the last occurred error.
+
+=head2 getDOMExceptionDetails
+
+Returns ARRAYREF with several details on the most recent error. See
+example: 
+
+  $arr = $situa->getExceptionDetails();
+  ($code, $message, $uri, $line) = @$arr;
 
 =head1 HANDLERS
 
@@ -652,7 +985,7 @@ always the same:
 
 is a reference to registered object, so you can implement handlers the
 common object way. If you register a handler with a hash reference (see
-L<RegHandler>, this parameter refers to a hidden object, which is
+L<"RegHandler">, this parameter refers to a hidden object, which is
 useless for you.
 
 =item $processor
@@ -764,7 +1097,7 @@ A very simple message handler could look like this:
 
   sub myMHMakeCode {
       my ($self, $processor, $severity, $facility, $code);
-      return $code; #i can deal with internal numbers
+      return $code; # I can deal with internal numbers
   }
 
   sub myMHLog {
@@ -851,7 +1184,7 @@ The SAX-like handler is not yet supported.
 
 This handler was introduced in version 0.42 and could be subject of
 change in the near future. For the namespace collision with message
-handler misc. handler uses prefix 'XS' (like eXtended features).
+handler misc. handler uses prefix 'XS' (like extended features).
 
 =over
 
@@ -859,7 +1192,7 @@ handler misc. handler uses prefix 'XS' (like eXtended features).
 
 This function is called, when document attributes are specified via
 <xsl:output> instruction. C<$contentType> holds value of "media-type"
-attribute, C<$encoding> holds value of "ecoding attribute.
+attribute, C<$encoding> holds value of "encoding attribute.
 
 Return value of this callback is discarded.
 

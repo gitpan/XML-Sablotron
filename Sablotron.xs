@@ -1,4 +1,4 @@
-/* 
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  * The contents of this file are subject to the Mozilla Public
  * License Version 1.1 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@
 #include "XSUB.h"
 #include <sablot.h>
 #include <shandler.h>
+#include <sdom.h>
 
 #if defined(WIN32)
 #if defined(__cplusplus) && !defined(PERL_OBJECT)
@@ -587,6 +588,8 @@ MiscHandler xh_handler_vector = {
 * useful macros
 ***********************************************************/
 
+#define SIT_HANDLE(sit) (SablotSituation)SvIV(*hv_fetch((HV*)SvRV(sit), "_handle", 7, 0))
+
 #define VALIDATE_RV(sv)  (! SvOK(sv) || (SvROK(sv) && \
                           (SvTYPE(SvRV(sv)) == SVt_PVCV)))
 
@@ -595,6 +598,10 @@ MiscHandler xh_handler_vector = {
 
 #define GET_PROCESSOR(object) (void*)(SvIV(*hv_fetch((HV*)SvRV(object), \
                               "_handle", 7, 0)))
+
+#define DOC_HANDLE(doc) (SDOM_Document)SvIV(*hv_fetch((HV*)SvRV(doc), \
+                         "_handle", 7, 0))
+
 
 /* #define GET_PROCESSOR(object) ((void*)SvIV(SvRV(object))) */
 
@@ -628,6 +635,8 @@ SablotProcessStrings(sheet,input,result)
 	RETVAL
 	CLEANUP:
 	if (! RETVAL && foo) SablotFree(foo);
+
+#/* renamed to avoid the conflict with the new object method process */
 
 int
 SablotProcess(sheetURI, inputURI, resultURI, params, arguments, result)
@@ -785,6 +794,71 @@ SablotRunProcessor(object, sheetURI, inputURI, resultURI, params, arguments)
 	OUTPUT:
 	RETVAL
 
+int
+addArg(object, sit, name, buff)
+        SV*     object
+        SV*     sit
+        char*   name
+        char*   buff
+	PREINIT:
+	void *processor;
+        CODE:
+        SablotSituation situa = SIT_HANDLE(sit);
+	processor = GET_PROCESSOR(object);
+        RETVAL = SablotAddArgBuffer(situa, processor, name, buff);
+        OUTPUT:
+        RETVAL
+
+int
+addArgTree(object, sit, name, tree)
+        SV*     object
+        SV*     sit
+        char*   name
+        SV*     tree
+	PREINIT:
+	void *processor;
+        SDOM_Document doc;
+        CODE:
+        SablotSituation situa = SIT_HANDLE(sit);
+	processor = GET_PROCESSOR(object);
+        doc = DOC_HANDLE(tree);
+        SablotLockDocument(situa, doc);
+        RETVAL = SablotAddArgTree(situa, processor, name, doc);
+        OUTPUT:
+        RETVAL
+
+int
+addParam(object, sit, name, value)
+        SV*     object
+        SV*     sit
+        char*   name
+        char*   value
+	PREINIT:
+	void *processor;
+        CODE:
+        SablotSituation situa = SIT_HANDLE(sit);
+	processor = GET_PROCESSOR(object);
+        RETVAL = SablotAddParam(situa, processor, name, value);
+        OUTPUT:
+        RETVAL
+
+int 
+process(object, sit, sheet, data, output)
+        SV*     object
+        SV*     sit
+        char*   sheet
+        char*   data
+        char*   output
+	PREINIT:
+	void *processor;
+        CODE:
+        SablotSituation situa = SIT_HANDLE(sit);
+	processor = GET_PROCESSOR(object);
+        RETVAL = SablotRunProcessorGen(situa, processor, sheet, data, output);
+        OUTPUT:
+        RETVAL
+
+
 char*
 SablotGetResultArg(object, uri)
 	SV *	object
@@ -941,19 +1015,96 @@ _unregHandler(object, type, wrapper)
 	OUTPUT:
 	RETVAL
 
-#int
-#_debug_refcnt(ref)
-#	SV 	*ref
-#	CODE:
-#	RETVAL = SvREFCNT(ref);
-#	OUTPUT:
-#	RETVAL
-#
-#int
-#_debug_refcnt_rv(ref)
-#	SV 	*ref
-#	CODE:
-#	RETVAL = SvREFCNT(SvRV(ref));
-#	OUTPUT:
-#	RETVAL
-#*/
+MODULE = XML::Sablotron    PACKAGE = XML::Sablotron::Situation
+
+int
+_getNewSituationHandle(object)
+        SV*      object
+        CODE:
+        SablotSituation sit;
+        SablotCreateSituation(&sit);
+        RETVAL = (int)sit;
+        OUTPUT:
+        RETVAL
+
+void
+_releaseHandle(object)
+        SV*      object
+        CODE:
+        SablotDestroySituation(SIT_HANDLE(object));
+
+void
+clear(object)
+        SV*      object
+        CODE:
+        SablotClearSituation(SIT_HANDLE(object));
+
+char*
+getErrorURI(object)
+        SV* object
+        CODE:
+        char *uri;
+        /*uri =  (char*)SablotGetErrorURI(SIT_HANDLE(object)); */
+        RETVAL = uri;
+        OUTPUT:
+        RETVAL
+
+int
+getErrorLine(object)
+        SV* object
+        CODE:
+        /* RETVAL = SablotGetErrorLine(SIT_HANDLE(object)); */
+        OUTPUT:
+        RETVAL
+
+char*
+getErrorMsg(object)
+        SV* object
+        CODE:
+        char *msg;
+        /* msg = (char*)SablotGetErrorMessage(SIT_HANDLE(object)); */
+        RETVAL = msg;
+        OUTPUT:
+        RETVAL
+        CLEANUP:
+        if (msg) SablotFree(msg);
+
+int
+getDOMExceptionCode(object)
+        SV*      object
+        CODE:
+        RETVAL = SDOM_getExceptionCode(SIT_HANDLE(object));
+        OUTPUT:
+        RETVAL
+
+char*
+getDOMExceptionMessage(object)
+        SV*      object
+        CODE:
+        char *message = SDOM_getExceptionMessage(SIT_HANDLE(object));
+        RETVAL = message;
+        OUTPUT:
+        RETVAL
+        CLEANUP:
+        if (message) SablotFree(message);
+
+AV*
+getDOMExceptionDetails(object)
+        SV*      object
+        CODE:
+        int code;
+        char *message;
+        char *documentURI;
+        int fileLine;
+        SDOM_getExceptionDetails(SIT_HANDLE(object), &code,
+                                 &message, &documentURI, &fileLine);
+        RETVAL = (AV*)sv_2mortal((SV*)newAV());
+        av_push(RETVAL, newSViv(code));
+        av_push(RETVAL, newSVpv(message, 0));
+        av_push(RETVAL, newSVpv(documentURI, 0));
+        av_push(RETVAL, newSViv(fileLine));
+        OUTPUT:
+        RETVAL
+        CLEANUP:
+        if (message) SablotFree(message);
+        if (documentURI) SablotFree(documentURI);

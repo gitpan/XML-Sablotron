@@ -139,18 +139,18 @@ print ((($c eq " *** ") && !$r) ? "ok 4\n" : "not ok 4\n");
 
 ########## simple runprocessor test ##########
 my $obj = new XML::Sablotron();
-$r = $obj->RunProcessor("arg:/a", "arg:/b", "arg:/c", 
+$r = $obj->runProcessor("arg:/a", "arg:/b", "arg:/c", 
 			undef, ["a", $template, "b", $data]);
-$c = $obj->GetResultArg("c");
+$c = $obj->getResultArg("c");
 
 print ((($c eq " *** ") && !$r) ? "ok 5\n" : "not ok 5\n");
 
 
 ########## message handler test ##########
 my $sh = new SimpleHandler();
-$obj->RegHandler(0, $sh);
-$obj->FreeResultArgs();
-$r = $obj->RunProcessor("arg:/a", "arg:/b", "arg:/c", 
+$obj->regHandler(0, $sh);
+$obj->freeResultArgs();
+$r = $obj->runProcessor("arg:/a", "arg:/b", "arg:/c", 
   			undef, ["a", $template, "b", $data . "kkk"]);
 
 print (($SimpleHandler::code_called and
@@ -158,7 +158,7 @@ print (($SimpleHandler::code_called and
 	$SimpleHandler::error_called) ? "ok 6\n" : "not ok 6\n");
 
 
-$obj->UnregHandler(0, $sh);
+$obj->unregHandler(0, $sh);
 undef $sh;
 
 ########## "local" methods for handler ##########
@@ -179,12 +179,12 @@ sub MHError {
 }
 
 
-$obj->RegHandler(0, { MHMakeCode => \&MHMakeCode,
+$obj->regHandler(0, { MHMakeCode => \&MHMakeCode,
   		      MHLog      => \&MHLog,
   		      MHError    => \&MHError,
   		    });
 
-$r = $obj->RunProcessor("arg:/a", "arg:/b", "arg:/c", 
+$r = $obj->runProcessor("arg:/a", "arg:/b", "arg:/c", 
   			undef, ["a", $template, "b", $data . "kkk"]);
 
 print (($code_c and $log_c and $error_c) ? "ok 7\n" : "not ok 7\n");
@@ -241,7 +241,7 @@ eof
 
 my $h_data = "<?xml version = '1.0'?><a/>";
 
-$obj->RegHandler(1, { SHOpen => \&SHOpen,
+$obj->regHandler(1, { SHOpen => \&SHOpen,
 		      SHGetAll => \&SHGetAll,
 		      SHGet => \&SHGet,
 		      SHPut => \&SHPut,
@@ -249,17 +249,17 @@ $obj->RegHandler(1, { SHOpen => \&SHOpen,
 		    }
 		);
 
-$obj->RunProcessor("arg:/a", "arg:/b", "arg:/c", undef, 
+$obj->runProcessor("arg:/a", "arg:/b", "arg:/c", undef, 
 		   ["a", $h_xsl, "b", $h_data]);
 
 
 undef $c;
-$c = $obj->GetResultArg("c");
+$c = $obj->getResultArg("c");
 
 print (($c eq "***") ? "ok 8\n" : "not ok 8\n");
 
 ########## output scheme handler ##########
-$obj->RunProcessor("arg:/a", "arg:/b", "test:/c", undef, 
+$obj->runProcessor("arg:/a", "arg:/b", "test:/c", undef, 
 		   ["a", $h_xsl, "b", $h_data]);
 
 print (($buff eq "***") ? "ok 9\n" : "not ok 9\n");
@@ -282,15 +282,15 @@ sub XHDocumentInfo {
     $enc = $encoding;
 }
 
-$obj->RegHandler(3, { XHDocumentInfo => \&XHDocumentInfo });
+$obj->regHandler(3, { XHDocumentInfo => \&XHDocumentInfo });
 
-$obj->RunProcessor("arg:/a", "arg:/b", "arg:/c", undef,
+$obj->runProcessor("arg:/a", "arg:/b", "arg:/c", undef,
                    ["a", $out_xsl, "b", $data]);
 
 
 print (($ct eq "text/html" and $enc eq "utf-8") ? "ok 10\n" : "not ok 10\n");
 
-#$obj->FreeResultArgs();
+#$obj->freeResultArgs();
 
 undef $obj;
 
