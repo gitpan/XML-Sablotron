@@ -58,7 +58,7 @@ WriteMakefile(
     VERSION_FROM => 'Sablotron.pm', 
     DEFINE	=> '-DPERL_POLLUTE',
     INC         => $include,
-    LIBS	=> ["$libpth -lsablot -lxmlparse -lxmltok"], 
+    LIBS	=> ["$libpth -lsablot -lexpat"], 
     clean     => {'FILES' => "log.xsl", },
 );
 

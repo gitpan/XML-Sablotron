@@ -93,7 +93,6 @@ sub new {
     bless $self, $class;
     my $foo = new XML::Sablotron::Processor();
     $self->{_processor} = $foo;
-    #$self->{_processor}->_setInstanceData();
     return $self;
 }
 
@@ -112,6 +111,8 @@ sub RunProcessorTie {
     tie @params, $tieclass, $params;
     tie @args, $tieclass, $args;
     my $ret =  $self->{_processor}->RunProcessor($t, $d, $o, \@params, \@args);
+    untie @params;
+    untie @args;
     return $ret;
 }
 
@@ -150,6 +151,31 @@ sub ClearError {
     return $self->{_processor}->ClearError(@_);
 }
 
+
+sub SetContentType {
+    my $self = shift;
+    return $self->{_processor}->SetContentType(@_);
+}
+
+sub GetContentType {
+    my $self = shift;
+    return $self->{_processor}->GetContentType(@_);
+}
+
+sub SetEncoding {
+    my $self = shift;
+    return $self->{_processor}->SetEncoding(@_);
+}
+
+sub GetEncoding {
+    my $self = shift;
+    return $self->{_processor}->GetEncoding(@_);
+}
+
+sub SetOutputEncoding {
+    my $self = shift;
+    $self->{_processor}->SetOutputEncoding(@_);
+}
 
 DESTROY {
     my $self = shift;
@@ -237,6 +263,26 @@ sub _releaseHandlers {
 	$self->_unregHandler($$he[0], $$he[1]);
     }
     @{$self->{_handlers}} = ();
+}
+
+sub SetContentType {
+    my ($self, $value) = @_;
+    return $self->{_contentType} = $value;
+}
+
+sub GetContentType {
+    my ($self, $value) = @_;
+    return $self->{_contentType};
+}
+
+sub SetEncoding {
+    my ($self, $value) = @_;
+    return $self->{_encoding} = $value;
+}
+
+sub GetEncoding {
+    my ($self, $value) = @_;
+    return $self->{_encoding};
 }
 
 DESTROY {
@@ -437,6 +483,10 @@ is a reference to array of named buffers
 
 =back
 
+URIs passed to this function may be from schemes supported internally
+(file:, arg:) of from any scheme handled by registered handler (see
+Handlers section).
+
 Note the difference between the RunProcessor method and the Process
 function. RunProcessor doesn't return the output buffer ($result parameter
 is missing).
@@ -520,6 +570,31 @@ This method unregisters a registered handler.
 Remember, that anonymously registered handlers can't be
 unregistered. (Of course, they can be canceled but it's a little bit
 tricky).
+
+=head2 Set/GetEncoding
+
+  $sab->SetEncoding($encoding);
+
+Calling these methods has no effect. They are valuable for
+miscellaneous handler, which may store received values together with
+the processor instance.
+
+=head2 Set/GetContentType
+
+  $sab->SetEncoding($encoding);
+
+Calling these methods has no effect. They are valuable for
+miscellaneous handler, which may store received values together with
+the processor instance.
+
+
+=head2 SetOutputEncoding
+
+  $sab->SetOutputEncoding($encoding);
+
+This methos allows to override the encoding specified in the
+<xsl:output> instruction. It enables to produce differently encoded
+outputs using one template.
 
 =head2 SetBase
 

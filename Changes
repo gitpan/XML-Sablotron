@@ -26,3 +26,10 @@ Revision history for Perl extension Sablotron.
 0.42 Thu Jul 19 14:40:00 2000
 	- SetBaseForScheme
 	- Miscellaneous handler support (document info)
+
+0.50 Wed Dec 20 09:17:00 2000
+	- to be used with new version of Expat (> 1.95)
+	- Set/GetContentType
+	- Set/GetEncoding
+	- SetOutputEncoding
+	- memory leak related to the releasing of handlers fixed

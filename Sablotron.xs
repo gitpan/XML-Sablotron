@@ -301,7 +301,9 @@ int SchemeHandlerGetAllStub(void *userData, void *processor,
 
 int SchemeHandlerFreeMemoryStub(void *userData, void *processor,
     char *buffer) {
-  free(buffer);
+  if (buffer) {
+    free(buffer);
+  }
 }
 
 int SchemeHandlerOpenStub(void *userData, void *processor,
@@ -712,8 +714,6 @@ _destroyProcessor(object)
 	processor = GET_PROCESSOR(object);
 	if ( SablotDestroyProcessor(processor) ) 
 	  croak("SablotDestroyProcesso failed");
-	// processor_obj = (SV*) SablotGetInstanceData(processor);
-	// if (processor_obj) SvREFCNT_dec(processor_obj);
 
 #break circular reference
 void
@@ -862,6 +862,15 @@ SablotClearError(object)
 	OUTPUT:
 	RETVAL
 
+void
+SablotSetOutputEncoding(object, encoding)
+	SV *	object
+	char *	encoding
+	PREINIT:
+	void *processor;
+	CODE:
+	processor = GET_PROCESSOR(object);
+	SablotSetEncoding(processor, encoding);
 
 ############################################################
 # intrface for handlers
@@ -895,7 +904,6 @@ _regHandler(object, type, wrapper)
             croak("Unsupported handler type");
 	}
 	SvREFCNT_inc(wrapper);
-
 	RETVAL = SablotRegHandler(processor, type, vector, wrapper);
 	OUTPUT:
 	RETVAL
@@ -910,7 +918,6 @@ _unregHandler(object, type, wrapper)
 	void *vector;
 	CODE:
 	processor = GET_PROCESSOR(object);
-
 	switch (type) {
 	  case 0:
 	    vector = &mh_handler_vector;
@@ -923,10 +930,10 @@ _unregHandler(object, type, wrapper)
             break;
           case 3:
             vector = &xh_handler_vector;
+	    break;
 	  otherwise:
             croak("Unsupported handler type");
 	}
-
 	RETVAL = SablotUnregHandler(processor, type, vector, wrapper);
 	SvREFCNT_dec(wrapper);
 	OUTPUT:

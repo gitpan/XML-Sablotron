@@ -1,28 +1,17 @@
+This file describes the installation procedure of Sablotron. To know
+more on Sablotron, please read the README file in the same directory 
+as this file.
+
 
 1. Intro
-2. Building
-3. Environment
-4. Known problems
+2. Prerequesties
+3. Building
+4. Environment
 5. More info
-
-!!!!!!!!!!!!!!!!!!!!!!!!!! READ THIS FIRST !!!!!!!!!!!!!!!!!!!!!!!
-
-This version is to be used with the new version of Expat (> 1.95)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 1. Intro
 ========================================
-
-This perl module is encapsulation of the XSLT processor called
-Sablotron. If you don't know, what is XSLT, look at
-http://www.w3.org site. If you don't know, what is Sablotron, look
-at http://www.gingerall.com.
-
-Original creator of XML::Sablotron is Ginger Alliance Ltd; Czech
-Republic.
-
 
 XML::Sablotron is a simple Perl package, which encapsulates the C API
 of Sablotron XSLT processor. The only important fact is, that this
@@ -31,8 +20,36 @@ package uses the dynamic linking of Sablotron.
 If you need use this module on platforms, which do not allow dynamic
 linking, please contact us.
 
+2. Prerequesties
+========================================
 
-2. Building
+You need the Sablotron package to be correctly installed on you machine. 
+If you don't have it, download it from http://www.gingerall.com.
+
+Unix: 
+----- 
+
+If you've installed Sablotron package in the standard way, all should
+be OK with no additional tweaking. If you've installed Sablotron in
+some non-system directory, you may need
+
+a) run perl Makefile.PL with -d switch, which allows to specify
+directory, where Sablotron is installed (supposes lib and include
+subdirs)
+
+b) set LD_LIBRARY_PATH environment variable to point to directory
+containing library files.
+
+NT:
+---
+
+a) Check, if Sablotron and Expat includes and *.lib files are placed
+in directories pointed by LIB and INCLUDE variables. Otherwise you have to use -d switch for 'perl Makefile.PL' (see Unix comment above).
+
+b) Check, if Sablotron dll files are placed in directories listed in
+PATH environment variable.
+
+3. Building
 ========================================
 
 Here is what you need:
@@ -42,12 +59,9 @@ Here is what you need:
 
 If you need any other port, please contact us.
 
-You need also the Sablotron package to be correctly installed on you machine. 
-If you don't have it, download it from http://www.gingerall.com.
-
 Unpack the tar-ball file into a directory of your choice.
 
-Change into the XML-Sablot* directory and type
+Change into the XML-Sablotron* directory and type
 
   perl Makefile.PL
   make
@@ -67,7 +81,7 @@ locations. You can make the Makefile.PL to use files in any other
 directory using the `-d' switch.
 
 The first line of previous example may look like this:
-perl Makefile.PL -d c:\great-tools\Sablot-0.40
+perl Makefile.PL -d c:\great-tools\Sablot-x.xx
 
 If the test process fails, there may be something wrong with your 
 environment. Please, check the following "Environment" section.
@@ -76,30 +90,13 @@ If you see any errors, you may try to fix it or just contact us.
 Any help or feedback from users is highly appreciated.
 
 
-3. Environment
+4. Environment
 ========================================
+
+Unix boxes may need add lib directory with Sablotron and Expat files
+to LD_LIBRARY_PATH.
 
 NT boxes need set the PATH variable to the Sablotron bin/ directory.
-
-
-4. Known problems
-========================================
-
-Due the mixing of C++ library (Sablotron) and C library (Perl
-extension) there are some problems on several platforms (e.g
-FreeBSD). This problems are caused by 'misunderstanding' between C++
-and C linker.
-
-As a result you may see complaints of unresolved symbols like
-__rtti_user, __builtin_vec_new and/or others.
-
-Solution is not simple and not deterministic. You have to force linker
-to use some standard libraries (like -lgcc) while linking Perl
-extension. To do it, add -l directive into Makefile.PL (just after
--lexpat & Co.).
-
-HTH
-
 
 
 5. More info
@@ -110,10 +107,9 @@ If it is not enough, take a look at our website
 
 http://www.gingerall.com
 
-Maintainer of this package is Pavel Hlavnicka (pavel@gingerall.cz)
 
 Enjoy Sablotron!!
 
-
+GA
 
 
