@@ -249,7 +249,7 @@ int SchemeHandlerGetAllStub(void *userData, void *processor,
   GV *gv;
   unsigned long ret = 0;
   SV *value;
-  int len;
+  unsigned int len;
 
   wrapper = (SV*)userData;
 
@@ -283,7 +283,7 @@ int SchemeHandlerGetAllStub(void *userData, void *processor,
     value = POPs;
     if ( SvOK(value) ) {
       SvPV(value, len);
-      *buffer = malloc(len + 1);
+      *buffer = (char*) malloc(len + 1);
       strcpy(*buffer, SvPV(value, PL_na));
       *byteCount = len + 1;
     } else {
@@ -301,9 +301,11 @@ int SchemeHandlerGetAllStub(void *userData, void *processor,
 
 int SchemeHandlerFreeMemoryStub(void *userData, void *processor,
     char *buffer) {
+  unsigned long ret = 0;
   if (buffer) {
     free(buffer);
   }
+  return ret;
 }
 
 int SchemeHandlerOpenStub(void *userData, void *processor,
@@ -372,7 +374,7 @@ int SchemeHandlerGetStub(void *userData, void *processor,
   GV *gv;
   unsigned long ret = 0;
   SV *value;
-  int len;
+  unsigned int len;
 
   wrapper = (SV*)userData;
 
@@ -724,7 +726,7 @@ _release(object)
 	SV *processor_obj;
 	CODE:
 	processor = GET_PROCESSOR(object);
-	processor_obj = SablotGetInstanceData(processor);
+	processor_obj = (struct sv*) SablotGetInstanceData(processor);
 	if (processor_obj) SvREFCNT_dec(processor_obj);
 	SablotSetInstanceData(processor, NULL);
 
@@ -904,7 +906,7 @@ _regHandler(object, type, wrapper)
             croak("Unsupported handler type");
 	}
 	SvREFCNT_inc(wrapper);
-	RETVAL = SablotRegHandler(processor, type, vector, wrapper);
+	RETVAL = SablotRegHandler(processor, (HandlerType) type, vector, wrapper);
 	OUTPUT:
 	RETVAL
 
@@ -934,23 +936,24 @@ _unregHandler(object, type, wrapper)
 	  otherwise:
             croak("Unsupported handler type");
 	}
-	RETVAL = SablotUnregHandler(processor, type, vector, wrapper);
+	RETVAL = SablotUnregHandler(processor, (HandlerType) type, vector, wrapper);
 	SvREFCNT_dec(wrapper);
 	OUTPUT:
 	RETVAL
 
-int
-_debug_refcnt(ref)
-	SV 	*ref
-	CODE:
-	RETVAL = SvREFCNT(ref);
-	OUTPUT:
-	RETVAL
-
-int
-_debug_refcnt_rv(ref)
-	SV 	*ref
-	CODE:
-	RETVAL = SvREFCNT(SvRV(ref));
-	OUTPUT:
-	RETVAL
+#int
+#_debug_refcnt(ref)
+#	SV 	*ref
+#	CODE:
+#	RETVAL = SvREFCNT(ref);
+#	OUTPUT:
+#	RETVAL
+#
+#int
+#_debug_refcnt_rv(ref)
+#	SV 	*ref
+#	CODE:
+#	RETVAL = SvREFCNT(SvRV(ref));
+#	OUTPUT:
+#	RETVAL
+#*/

@@ -45,7 +45,7 @@ require DynaLoader;
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = '0.43';
+$VERSION = '0.52';
 
 my @functions = qw (
 SablotProcessStrings 

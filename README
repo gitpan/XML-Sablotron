@@ -56,18 +56,11 @@ Change into the XML-Sablot* directory and type
 
 Running a Win32 box you have to type:
 
-  perl Makefile.PL
+  perl Makefile.PL LIBS="-Lx:\somewhere\lib"
   nmake
   nmake test
   nmake install (if you want)
 
-!! NT problem !!
-The Perl Makemaker finds Sablotron libraries only in some special
-locations. You can make the Makefile.PL to use files in any other 
-directory using the `-d' switch.
-
-The first line of previous example may look like this:
-perl Makefile.PL -d c:\great-tools\Sablot-0.40
 
 If the test process fails, there may be something wrong with your 
 environment. Please, check the following "Environment" section.
