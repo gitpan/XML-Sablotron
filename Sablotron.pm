@@ -42,7 +42,7 @@ require DynaLoader;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.80';
+$VERSION = '0.82';
 
 my @functions = qw (
 SablotProcessStrings 

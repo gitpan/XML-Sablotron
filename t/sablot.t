@@ -116,7 +116,7 @@ $data = '<?xml version="1.0"?><xml><a/></xml>';
 $c = "--";
 $r = ProcessStrings($template, $data, $c);
 
-print ((($c eq " *** ") && !$r) ? "ok 2\n" : "not ok 2\n");
+print ((($c eq " *** \n") && !$r) ? "ok 2\n" : "not ok 2\n");
 
 ########## simple process test ##########
 $c = "--";
@@ -124,7 +124,7 @@ $r = Process("arg:/a", "arg:/b", "arg:/c",
 			      undef, 
 			      ["a", $template, "b", $data], $c);
 
-print ((($c eq " *** ") && !$r) ? "ok 3\n" : "not ok 3\n");
+print ((($c eq " *** \n") && !$r) ? "ok 3\n" : "not ok 3\n");
 
 ########## process test with param ##########
 $c = "--";
@@ -132,7 +132,7 @@ $r = Process("arg:/a", "arg:/b", "arg:/c",
 			      ["testparam", " *** "], 
 			      ["a", $template_p, "b", $data], $c);
 
-print ((($c eq " *** ") && !$r) ? "ok 4\n" : "not ok 4\n");
+print ((($c eq " *** \n") && !$r) ? "ok 4\n" : "not ok 4\n");
 
 #################
 # object tests
@@ -143,7 +143,7 @@ $r = $obj->runProcessor("arg:/a", "arg:/b", "arg:/c",
 			undef, ["a", $template, "b", $data]);
 $c = $obj->getResultArg("c");
 
-print ((($c eq " *** ") && !$r) ? "ok 5\n" : "not ok 5\n");
+print ((($c eq " *** \n") && !$r) ? "ok 5\n" : "not ok 5\n");
 
 
 ########## message handler test ##########
@@ -257,13 +257,13 @@ $obj->runProcessor("arg:/a", "arg:/b", "arg:/c", undef,
 undef $c;
 $c = $obj->getResultArg("c");
 
-print (($c eq "***") ? "ok 8\n" : "not ok 8\n");
+print (($c eq "***\n") ? "ok 8\n" : "not ok 8\n");
 
 ########## output scheme handler ##########
 $obj->runProcessor("arg:/a", "arg:/b", "test:/c", undef, 
 		   ["a", $h_xsl, "b", $h_data]);
 
-print (($buff eq "***") ? "ok 9\n" : "not ok 9\n");
+print (($buff eq "***\n") ? "ok 9\n" : "not ok 9\n");
 
 
 ########## misc handler test - DocumentData ##########
