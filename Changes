@@ -39,3 +39,8 @@ Revision history for Perl extension Sablotron.
 	  (see perldoc XML::Sablotron::DOM)
 	- new API for XML::Sablotron processor
   	  (see perldoc XML::Sablotron)
+
+0.61 Wed Jun 16 11:26:00 2000
+	- DOM.pm modified so it may be used w/ perl 5.005_03
+
+

@@ -35,7 +35,6 @@ package XML::Sablotron::DOM;
 
 #require 5.005_62;
 use strict;
-use warnings;
 use Carp;
 
 require XML::Sablotron;
@@ -43,7 +42,31 @@ require XML::Sablotron;
 require Exporter;
 require DynaLoader;
 
-our @ISA = qw(Exporter DynaLoader);
+my @_constants = qw ( $ELEMENT_NODE $ATTRIBUTE_NODE $TEXT_NODE 
+		      $CDATA_SECTION_NODE $ENTITY_REFERENCE_NODE
+		      $ENTITY_NODE $PROCESSING_INSTRUCTION_NODE
+		      $COMMENT_NODE $DOCUMENT_NODE $DOCUMENT_TYPE_NODE
+		      $DOCUMENT_FRAGMENT_NODE $NOTATION_NODE 
+		      
+		      $SDOM_OK $INDEX_SIZE_ERR $HIERARCHY_ERR 
+		      $WRONG_DOCUMENT_ERR $NO_MODIFICATION_ALLOWED_ERR
+		      $NOT_FOUND_ERR $INVALID_NODE_TYPE_ERR
+		      $QUERY_PARSE_ERR $QUERY_EXECUTION_ERR $NOT_OK );
+
+use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK @EXPORT $VERSION
+	    $ELEMENT_NODE $ATTRIBUTE_NODE $TEXT_NODE 
+	    $CDATA_SECTION_NODE $ENTITY_REFERENCE_NODE
+	    $ENTITY_NODE $PROCESSING_INSTRUCTION_NODE
+	    $COMMENT_NODE $DOCUMENT_NODE $DOCUMENT_TYPE_NODE
+	    $DOCUMENT_FRAGMENT_NODE $NOTATION_NODE $OTHER_NODE
+	    
+	    $SDOM_OK $INDEX_SIZE_ERR $HIERARCHY_ERR 
+	    $WRONG_DOCUMENT_ERR $NO_MODIFICATION_ALLOWED_ERR
+	    $NOT_FOUND_ERR $INVALID_NODE_TYPE_ERR
+	    $QUERY_PARSE_ERR $QUERY_EXECUTION_ERR $NOT_OK 
+	   );
+
+@ISA = qw(Exporter DynaLoader);
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -52,59 +75,54 @@ our @ISA = qw(Exporter DynaLoader);
 # This allows declaration	use XML::Sablotron::DOM ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
-my @_type_constants = qw ( $ELEMENT_NODE $ATTRIBUTE_NODE $TEXT_NODE 
-			   $CDATA_SECTION_NODE $ENTITY_REFERENCE_NODE
-			   $ENTITY_NODE $PROCESSING_INSTRUCTION_NODE
-			   $COMMENT_NODE $DOCUMENT_NODE $DOCUMENT_TYPE_NODE
-			   $DOCUMENT_FRAGMENT_NODE $NOTATION_NODE 
-			   
-			   $SDOM_OK $INDEX_SIZE_ERR $HIERARCHY_ERR 
-			   $WRONG_DOCUMENT_ERR $NO_MODIFICATION_ALLOWED_ERR
-			   $NOT_FOUND_ERR $INVALID_NODE_TYPE_ERR
-			   $QUERY_PARSE_ERR $QUERY_EXECUTION_ERR $NOT_OK );
 
-our @_functions = qw ( parse 
-		       parseBuffer 
-		       parseStylesheet 
-		       parseStylesheetBuffer);
+my @_functions = qw ( parse 
+		      parseBuffer 
+		      parseStylesheet 
+		      parseStylesheetBuffer);
 
-our %EXPORT_TAGS = ( 'all' => [ @_type_constants, @_functions ],
-		     'constants' => \@_type_constants,
+%EXPORT_TAGS = ( 'all' => [ @_constants, @_functions ],
+		     'constants' => \@_constants,
 		     'functions' => \@_functions,
 		   );
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-our @EXPORT = qw(createNode);
-our $VERSION = '0.60';
+@EXPORT = qw(createNode);
+
+$VERSION = '0.61';
 
 #constants for node types
-our $ELEMENT_NODE = 1;
-our $ATTRIBUTE_NODE = 2;
-our $TEXT_NODE = 3;
-our $CDATA_SECTION_NODE = 4;
-our $ENTITY_REFERENCE_NODE = 5;
-our $ENTITY_NODE = 6;
-our $PROCESSING_INSTRUCTION_NODE = 7;
-our $COMMENT_NODE = 8;
-our $DOCUMENT_NODE = 9;
-our $DOCUMENT_TYPE_NODE = 10;
-our $DOCUMENT_FRAGMENT_NODE = 11;
-our $NOTATION_NODE = 12;
-our $OTHER_NODE = 13; #not in spec
+$ELEMENT_NODE = 1;
+$ATTRIBUTE_NODE = 2;
+$TEXT_NODE = 3;
+$CDATA_SECTION_NODE = 4;
+$ENTITY_REFERENCE_NODE = 5;
+$ENTITY_NODE = 6;
+$PROCESSING_INSTRUCTION_NODE = 7;
+$COMMENT_NODE = 8;
+$DOCUMENT_NODE = 9;
+$DOCUMENT_TYPE_NODE = 10;
+$DOCUMENT_FRAGMENT_NODE = 11;
+$NOTATION_NODE = 12;
+$OTHER_NODE = 13; #not in spec
 
 #constants for error codes
-our $SDOM_OK = 0;
-our $INDEX_SIZE_ERR = 1;
-our $HIERARCHY_ERR = 3;
-our $WRONG_DOCUMENT_ERR = 4;
-our $NO_MODIFICATION_ALLOWED_ERR = 7;
-our $NOT_FOUND_ERR = 8;
-our $INVALID_NODE_TYPE_ERR = 1000;
-our $QUERY_PARSE_ERR = 1001;
-our $QUERY_EXECUTION_ERR = 1002;
-our $NOT_OK = 1003;
+$SDOM_OK = 0;
+$INDEX_SIZE_ERR = 1;
+$HIERARCHY_ERR = 3;
+$WRONG_DOCUMENT_ERR = 4;
+$NO_MODIFICATION_ALLOWED_ERR = 7;
+$NOT_FOUND_ERR = 8;
+$INVALID_NODE_TYPE_ERR = 9;
+$QUERY_PARSE_ERR = 10;
+$QUERY_EXECUTION_ERR = 11;
+$NOT_OK = 12;
 
+# executable prt of the module
+bootstrap XML::Sablotron::DOM $VERSION;
+
+1;
 
 ########################## Node #######################
 package XML::Sablotron::DOM::Node;
@@ -122,7 +140,8 @@ sub DESTROY {
 
 #################### Document ####################
 package XML::Sablotron::DOM::Document;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #constructors
 #sub new {
@@ -168,7 +187,8 @@ sub DESTROY {
 
 #################### Element ####################
 package XML::Sablotron::DOM::Element;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 sub setAttributes {
     my ($self, $hash, $sit) = @_;
@@ -189,53 +209,55 @@ sub getAttributes {
 
 #################### Attribute ####################
 package XML::Sablotron::DOM::Attribute;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### Text ####################
 package XML::Sablotron::DOM::Text;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### CDATASection ####################
 package XML::Sablotron::DOM::CDATASection;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### EntityReference ####################
 package XML::Sablotron::DOM::EntityReference;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### Entity ####################
 package XML::Sablotron::DOM::Entity;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### ProcessingInstruction ####################
 package XML::Sablotron::DOM::ProcessingInstruction;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### Comment ####################
 package XML::Sablotron::DOM::Comment;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### DocumentType ####################
 package XML::Sablotron::DOM::DocumentType;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### DocumentFragment ####################
 package XML::Sablotron::DOM::DocumentFragment;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 #################### Notation ####################
 package XML::Sablotron::DOM::Notation;
-our @ISA = qw( XML::Sablotron::DOM::Node );
+use vars qw( @ISA );
+@ISA = qw( XML::Sablotron::DOM::Node );
 
 
-
-# executable prt of the module
-bootstrap XML::Sablotron::DOM $VERSION;
-
-
-
-
-1;
 __END__
 
 
