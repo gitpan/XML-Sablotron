@@ -269,7 +269,7 @@ XML::Sablotron::DOM - The DOM interface to Sablotron's internal structures
   use XML::Sablotron::DOM;
 
   my $situa = new XML::Sablotron::Situation();
-  my $doc = new Sablotron::XML::Document(SITUATION => $sit);
+  my $doc = new XML::Sablotron::DOM::Document(SITUATION => $sit);
 
   my $e = $doc->createElement($situa, "foo");
   my $t = $doc->createTextNode($situa, "this is my text");

@@ -42,7 +42,7 @@ require DynaLoader;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.65';
+$VERSION = '0.71';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -59,6 +59,12 @@ Process
 
 @EXPORT_OK = @functions;
 %EXPORT_TAGS = ( all => [@functions] );
+
+use constant HLR_MESSAGE => 0;
+use constant HLR_SCHEME => 1;
+use constant HLR_SAX => 2;
+use constant HLR_MISC => 3;
+use constant HLR_ENC => 4;
 
 BEGIN {
 
@@ -1147,7 +1153,7 @@ don't implement this function or return the C<undef> value from it.
   $scheme parameter holds the scheme extracted from a URI
   $rest holds the rest of the URI
 
-=item SHOpen($self, $processor, $scheme, $rest);
+=item SHOpen($self, $processor, $scheme, $rest)
 
 This function is called immediately after SHGet or SHPut is called. Use it
 to pass some "handle" (I mean a user data) to the processor. This data will
@@ -1162,7 +1168,7 @@ $handle is the value previously returned from the SHOpen function.
 
 Return the C<undef> value to say "No more data".
 
-=item SHPut($self, processor, $handle, $data)
+=item SHPut($self, $processor, $handle, $data)
 
 This function stores a chunk of data given in the $data parameter.
 

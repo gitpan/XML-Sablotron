@@ -1,4 +1,4 @@
-# 
+# -*- mode: cperl -*-
 # The contents of this file are subject to the Mozilla Public
 # License Version 1.1 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of
@@ -153,9 +153,10 @@ $obj->freeResultArgs();
 $r = $obj->runProcessor("arg:/a", "arg:/b", "arg:/c", 
   			undef, ["a", $template, "b", $data . "kkk"]);
 
-print (($SimpleHandler::code_called and
-	$SimpleHandler::log_called and
-	$SimpleHandler::error_called) ? "ok 6\n" : "not ok 6\n");
+my $_foo = ($SimpleHandler::code_called and
+	    $SimpleHandler::log_called and
+	    $SimpleHandler::error_called);
+print ($_foo ? "ok 6\n" : "not ok 6\n");
 
 
 $obj->unregHandler(0, $sh);

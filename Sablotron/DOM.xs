@@ -283,6 +283,7 @@ setNodeName(object, name, ...)
      CN(node);
      DE( situa, SDOM_setNodeName(situa, node, (SDOM_char*)name) );
 
+
 char*
 getNodeValue(object, ...)
      SV*      object

@@ -179,6 +179,7 @@ WriteMakefile(
 	      VERSION_FROM => 'Sablotron.pm', 
 	      DEFINE	=> '-DPERL_POLLUTE',
 	      clean     => {'FILES' => "log.xsl", },
+	      dist	=> {COMPRESS => 'gzip', SUFFIX => 'tar.gz'},
 	      DIR       => [qw( Sablotron )],
 	      LIBS      => $libs, 
 	      @extras,
@@ -186,3 +187,4 @@ WriteMakefile(
 
 
 __END__
+

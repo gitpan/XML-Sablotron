@@ -1,4 +1,4 @@
-# 
+# -*- mode: cperl -*-
 # The contents of this file are subject to the Mozilla Public
 # License Version 1.1 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,7 @@
 
 use vars qw ( $loaded );
 
-BEGIN { $| = 1; print "1..1\n"; }
+BEGIN { $| = 1; print "1..29\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
 require  XML::Sablotron;
@@ -144,7 +144,7 @@ print ($type == 1 ? "ok $test\n" : "not ok $test\n");;
 $test++;
 $name = $e->getNodeName();
 print ($name eq "boot" ? "ok $test\n" : "not ok $test\n");;
- 
+
 # test rename node (element)
 $test++;
 $e->setNodeName("root");
@@ -243,6 +243,7 @@ print ($str eq "new text" ? "ok $test\n" : "not ok $test\n");
 $c1->appendChild($t);
 
 # test clone
+
 $test++;
 my $docc = new XML::Sablotron::DOM::Document( SITUATION => $sit );
 my $cloned = $docc->cloneNode($c1, 1);
@@ -262,7 +263,7 @@ print ($ok ? "ok $test\n" : "not ok $test\n");
 #test removeAttribute
 $test++;
 $cx->removeAttribute("c");
-my $attrs = $cx->getAttributes();
+$attrs = $cx->getAttributes();
 $ok = $$attrs{a} eq "a1" && $$attrs{b} eq "b1";
 print ($ok ? "ok $test\n" : "not ok $test\n");
 
@@ -283,13 +284,18 @@ $sab->addArgTree($sit, "sheet", $sheet);
 
 #parse and populate the document
 my $pdoc = XML::Sablotron::DOM::parseBuffer($sit, $glob_doc);
+
 my $ee = $pdoc->createElement("data");
 my $tt = $pdoc->createTextNode("d");
+
 $ee->appendChild($tt);
 $pdoc->getFirstChild->appendChild($ee);
+
 #process
 $sab->addArgTree($sit, "data", $pdoc);
 $sab->process($sit, "arg:/sheet", "arg:/data", "arg:/result");
+
+
 my $ret = $sab->getResultArg("result");
 print ($ret eq "prefix: abcd" ? "ok $test\n" : "not ok $test\n");
 

@@ -1,6 +1,14 @@
 Changes
+INSTALL
 MANIFEST
 Makefile.PL
-Sablotron.xs
+README
+Sablotron/Changes
+Sablotron/DOM.pm
+Sablotron/DOM.xs
+Sablotron/Makefile.PL
+Sablotron/SAXBuilder.pm
 Sablotron.pm
-test.pl
+Sablotron.xs
+t/sablot.t
+t/dom.t
