@@ -184,8 +184,8 @@ MessageHandlerLogStub(void *userData, void *processor, MH_ERROR code,
 
 MH_ERROR 
 MessageHandlerErrorStub(void *userData, void *processor, MH_ERROR code, 
-	MH_LEVEL level, char **fields) {
-
+	MH_LEVEL level, char **fields) 
+{
   SV *wrapper;
   SV * processor_obj;
   HV *stash;
@@ -531,6 +531,393 @@ SchemeHandler sh_handler_vector = {
   SchemeHandlerGetStub,
   SchemeHandlerPutStub,
   SchemeHandlerCloseStub
+};
+
+/*********************
+ SAX-like handler
+*********************/
+
+void SAXHandlerStartDocumentStub(void* userData, void *processor)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerStartDocument"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXStartDocument", 16, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXStartDocument method missing");
+    }
+}
+
+void SAXHandlerStartElementStub(void* userData, void *processor,
+                                const char* name, const char** atts)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+    char **att;
+
+    /* printf("===> %s\n", "SAXHandlerStartElement"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXStartElement", 15, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) name, strlen(name))));
+        att = (char**)atts;
+        while (*att) {
+            XPUSHs(sv_2mortal(newSVpv(*att, strlen(*att))));
+            att++;
+        }
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXStartElement method missing");
+    }
+}
+
+void SAXHandlerEndElementStub(void* userData, void *processor,
+                              const char* name)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerEndElement"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXEndElement", 13, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) name, strlen(name))));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXEndElement method missing");
+    }
+}
+
+void SAXHandlerStartNamespaceStub(void* userData, void *processor,
+                                  const char* prefix, const char* uri)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerStartNamespace"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXStartNamespace", 17, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) prefix, strlen(prefix))));
+        XPUSHs(sv_2mortal(newSVpv((char*) uri, strlen(uri))));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXStartNamespace method missing");
+    }
+}
+
+void SAXHandlerEndNamespaceStub(void* userData, void *processor,
+                                const char* prefix)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerEndNamespaceStub"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXEndNamespace", 15, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) prefix, strlen(prefix))));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXEndNamespace method missing");
+    }
+}
+
+void SAXHandlerCommentStub(void* userData, void *processor,
+                           const char* contents)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerComment"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXComment", 10, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) contents, strlen(contents))));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXComment method missing");
+    }
+}
+
+void SAXHandlerPIStub(void* userData, void *processor,
+                      const char* target, const char* contents)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerPI"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXPI", 5, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) target, strlen(target))));
+        XPUSHs(sv_2mortal(newSVpv((char*) contents, strlen(contents))));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXPI method missing");
+    }
+}
+
+void SAXHandlerCharactersStub(void* userData, void *processor,
+                              const char* contents, int length)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerCharacters"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXCharacters", 13, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        XPUSHs(sv_2mortal(newSVpv((char*) contents, length)));
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXCharacters method missing");
+    }
+}
+
+void SAXHandlerEndDocumentStub(void* userData, void *processor)
+{
+    SV *wrapper;
+    SV * processor_obj;
+    HV *stash;
+    GV *gv;
+
+    /* printf("===> %s\n", "SAXHandlerEndDocument"); */
+
+    wrapper = (SV*)userData;
+    
+    processor_obj = (SV*) SablotGetInstanceData(processor);
+    stash = SvSTASH(SvRV(wrapper));
+    gv = gv_fetchmeth(stash, "SAXEndDocument", 14, 0);
+    
+    if (gv) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        
+        PUSHMARK(SP);  
+        XPUSHs(wrapper);
+        if (processor_obj) 
+            XPUSHs(processor_obj);
+        else
+            XPUSHs(&sv_undef);
+
+        PUTBACK;
+        
+        perl_call_sv((SV*)GvCV(gv), G_SCALAR);
+        
+        FREETMPS;
+        LEAVE;
+    } else {
+        croak("SAXEndDocument method missing");
+    }
+}
+
+SAXHandler sax_handler_vector = {
+    SAXHandlerStartDocumentStub,
+    SAXHandlerStartElementStub,
+    SAXHandlerEndElementStub,
+    SAXHandlerStartNamespaceStub,
+    SAXHandlerEndNamespaceStub,
+    SAXHandlerCommentStub,
+    SAXHandlerPIStub,
+    SAXHandlerCharactersStub,
+    SAXHandlerEndDocumentStub
 };
 
 /*********************
@@ -971,7 +1358,7 @@ _regHandler(object, type, wrapper)
 	    vector = &sh_handler_vector;
             break;
           case 2:
-            croak("SAX handler not yet supported");
+            vector = &sax_handler_vector;
             break;
           case 3:
             vector = &xh_handler_vector;
@@ -1002,7 +1389,7 @@ _unregHandler(object, type, wrapper)
 	    vector = &sh_handler_vector;
             break;
           case 2:
-            croak("SAX handler not yet supported");
+            vector = &sax_handler_vector;
             break;
           case 3:
             vector = &xh_handler_vector;

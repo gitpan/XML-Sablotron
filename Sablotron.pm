@@ -42,7 +42,7 @@ require DynaLoader;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.82';
+$VERSION = '0.90';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -1209,15 +1209,72 @@ You can close you internal connections, files, etc. using this function.
 
 See the test script (test.pl) included in this distribution.
 
-=head2 SAX handler
+=head2 SAX handler - overview
 
-The SAX-like handler is not yet supported.
+Sablotron supports both of physical (file, buffer) and event based
+output methods. SAX handler is a bit confusing name, because events
+produced by the engine are of a bit different flavors then 'real' SAX
+events; think about this feature as about SAX-like handler.
 
-=head2 Miscellaneous handler
+You may set this handler if you want to catch output events and
+process them as you wish. Note, that there are XML::SAXDriverr::Sablot
+and XML::SAXFilter::Sablot Perl modules available, so you don't need
+to deal with SAX-like handler, if you want to use Sablotron in
+standard  SAX chains.
+
+=head2 SAX handler - interface
+
+=over
+
+=item SAXStartDocument($self, $proc)
+
+Event called at the very beginning of the output.
+
+=item SAXStartNamespace($self, $proc, $prefix, $uri)
+
+Event called when a new namespace declaration occurs.
+
+=item SAXEndNamespace($self, $proc, $prefix)
+
+Event called when a namespace declaration runs out of the scope. Note,
+that introducing and canceling namespaces don't have to be properly
+nested.
+
+=item SAXStartElement($self, $proc, $name, %atts)
+
+Event called when an element is started. Name and attribute values are
+provided.
+
+=item SAXEndElement($self, $proc, $name)
+
+Event called when an element is closed. Called before namespaces run
+out of the scope.
+
+=item SAXCharacters($self, $proc, $data)
+
+Event called when data are output.
+
+=item SAXComment($self, $proc, $data)
+
+Event called when a comment occurs.
+
+=item SAXPI($self, $proc, $target, $data)
+
+Event called when processing instruction occurs.
+
+=item SAXEndDocument($self, $proc)
+
+Event called at the very end of the document.
+
+=back
+
+=head2 Miscellaneous handler - overview
 
 This handler was introduced in version 0.42 and could be subject of
 change in the near future. For the namespace collision with message
 handler misc. handler uses prefix 'XS' (like extended features).
+
+=head2 Miscellaneous handler - interface
 
 =over
 
