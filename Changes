@@ -44,4 +44,8 @@ Revision history for Perl extension Sablotron.
 	- DOM.pm modified so it may be used w/ perl 5.005_03
 
 0.70 Wed Sep 19 10:13:00 2001
-	- XML::Sablotron::SAXBuiled added
+	- XML::Sablotron::SAXBuiler added
+
+0.80 Thu Jan 10 12:38:00 2001
+	- XML::Sablotron::Situation::setOptions added
+	- JavaScript may be linked (Makefile.PL)

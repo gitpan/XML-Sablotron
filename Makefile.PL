@@ -152,7 +152,33 @@ Sablot_Not_Installed;
   }
 }
 
-$libs = "-lsablot -lexpat";
+#linking javascript
+@replacement_args = ();
+my ($js_libpath, $js_libname);
+foreach (@ARGV) {
+    if (/^JSLIB(PATH|NAME)=(.+)/) {
+	if ($1 eq 'PATH') {
+	    $js_libpath = $2;
+	} else {
+	    $js_libname = $2;
+	}
+    } else {
+	push @replacement_args, $_;
+    }
+}
+@ARGV = @replacement_args;
+
+$js_libname = 'js' if $js_libpath && ! $js_libname;
+
+$libs = '';
+
+if ($js_libname || $js_libpath) {
+    $libs = "-l$js_libname $libs" if $js_libname;
+    $libs = "-L$js_libpath $libs" if $js_libpath;
+}
+
+#sablot and expat libraries
+$libs = "-lsablot -lexpat $libs";
 unless ($^O eq 'MSWin32') {
     $libs = "$libs -lm";
 }

@@ -1034,6 +1034,13 @@ _releaseHandle(object)
         SablotDestroySituation(SIT_HANDLE(object));
 
 void
+setOptions(object, flags)
+        SV*      object
+        int      flags
+        CODE:
+        SablotSetOptions(SIT_HANDLE(object), flags);
+
+void
 clear(object)
         SV*      object
         CODE:

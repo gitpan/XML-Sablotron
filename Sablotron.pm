@@ -42,7 +42,7 @@ require DynaLoader;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.71';
+$VERSION = '0.80';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -400,6 +400,10 @@ DESTROY {
 # situation object
 
 package XML::Sablotron::Situation;
+
+use constant SAB_NO_ERROR_REPORTING => 0x1;
+use constant SAB_PARSE_PUBLIC_ENTITIES => 0x2;
+use constant SAB_DISABLE_ADDING_META => 0x4;
 
 sub new {
     my $class = shift;
@@ -943,6 +947,29 @@ to get more details on error happened.
 
 (Note: In upcoming releases the Situation object will be used for
 more tasks like handler registering etc.)
+
+=head2 setOptions
+
+  $sit->setOptions($options);
+
+Control some processing features. The $options parameter may be any
+combination of following constants:
+
+=over 4
+
+=item * SAB_NO_ERROR_REPORTING
+
+supress error reporting
+
+=item * SAB_PARSE_PUBLIC_ENTITIES
+
+forces parser to parse all external entities (even public ones)
+
+=item * SAB_DISABLE_ADDING_META
+
+suppress outputting of the meta tag (html method)
+
+=back
 
 =head2 getDOMExceptionCode
 

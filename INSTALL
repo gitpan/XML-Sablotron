@@ -89,6 +89,20 @@ environment. Please, check the following "Environment" section.
 If you see any errors, you may try to fix it or just contact us.
 Any help or feedback from users is highly appreciated.
 
+------------------------------------------------------------
+JS EXTENSIONS NOTE:
+
+If you have installed Sablotron with JS extensions support,
+XML::Sablotron must link JavaScript shared library. To link a JS 
+library named libjs.so, issue:
+
+  perl Makefile.PL JSLIBPATH=<path_to_jslib.so>
+
+To link a library with a different name, type:
+
+  perl Makefile.PL JSLIBNAME=<lib_name> JSLIBPATH=<path_to_jslib.so>
+------------------------------------------------------------
+
 
 4. Environment
 ========================================
