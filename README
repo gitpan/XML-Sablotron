@@ -20,9 +20,8 @@ Sablotron. If you don't know, what is XSLT, look at
 http://www.w3.org site. If you don't know, what is Sablotron, look
 at http://www.gingerall.com.
 
-Original creator of XML::Sablotron is Ginger Alliance Ltd; Czech
+Original creator of XML::Sablotron is Ginger Alliance s.r.o.; Czech
 Republic.
-
 
 XML::Sablotron is a simple Perl package, which encapsulates the C API
 of Sablotron XSLT processor. The only important fact is, that this
@@ -36,7 +35,7 @@ linking, please contact us.
 ========================================
 
 Here is what you need:
-	a Linux box (tested on RH 6.1) with GNU C++ compiler
+	a Linux box (tested on RH 6 and 7) with GNU C++ compiler
   or
 	a NT box (testes on Win NT 4.0) with VC++ 4.2 (and later)
 
@@ -94,7 +93,6 @@ Makefile.PL parameter.
 To pass required librraies to linker, you may use the LIBS parameter to Makefile.PL (e.g. perl Makefile.PL LIBS='-liconv -lreadline).
 
 HTH
-
 
 
 5. More info

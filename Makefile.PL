@@ -16,7 +16,9 @@
 # Copyright (C) 1999-2000 Ginger Alliance Ltd. 
 # All Rights Reserved.
 # 
-# Contributor(s): Matt Sergeant
+# Contributor(s): o Matt Sergeant
+#                 o Nicolas Trebst, science+computing ag
+#                   n.trebst@science-computing.de
 # 
 # Alternatively, the contents of this file may be used under the
 # terms of the GNU General Public License Version 2 or later (the
@@ -42,6 +44,7 @@ my $expat_libpath = '';
 my $expat_incpath = '';
 
 my @replacement_args;
+
 
 foreach (@ARGV) {
   if (/^EXPAT(LIB|INC)PATH=(.+)/) {
@@ -72,7 +75,7 @@ unless ($expat_libpath) {
   unless ($found) {
       die <<'Expat_Not_Installed;';
 
-Expat must be installed prior to building XML::Sablotron and I can't find
+Expat must be installed prior to building XML::Sablotron and I can't find #'
 it in the standard library directories. You can download expat from:
 
 http://sourceforge.net/projects/expat/
@@ -129,7 +132,7 @@ unless ($sablot_libpath) {
   unless ($found) {
     die <<'Sablot_Not_Installed;';
 
-Sablot must be installed prior to building XML::Sablotron and I can't find
+Sablot must be installed prior to building XML::Sablotron and I can't find #'
 it in the standard library directories. You can download Sablotron from:
 
 http://www.gingerall.cz
@@ -182,7 +185,7 @@ unless ($js_libpath) {
     }
 }
 
-our $libs = '';
+our $libs = ' ';
 
 if ($js_found || $js_libpath) {
     $libs = "-l$js_libname $libs" if $js_libname;
@@ -222,6 +225,8 @@ foreach (@ARGV) {
 }
 @ARGV = @replacement_args;
 
+my $O_FILES = 'common.o';
+
 WriteMakefile(
 	      NAME	=> 'XML::Sablotron',
 	      AUTHOR    => 'Pavel Hlavnicka (pavel@gingerall.cz)',
@@ -230,8 +235,12 @@ WriteMakefile(
 	      DEFINE	=> '-DPERL_POLLUTE',
 	      clean     => {'FILES' => "log.xsl", },
 	      dist	=> {COMPRESS => 'gzip', SUFFIX => 'tar.gz'},
-	      DIR       => [qw( Sablotron )],
+	      DIR       => [qw( DOM Situation SXP Processor )],
 	      LIBS      => $libs, 
+	      OBJECT	=> q( $(O_FILES) ),
+              OPTIMIZE  => ' ',
+     CCFLAGS => '-g',
+	      depend => { 'Sablotron.c' => q(DOM/DOM.h DOM/DOM.xsh Processor/Processor.h Processor/Processor.xsh Processor/Handler_stubs.h SXP/SXP.h SXP/SXP.xsh Situation/Situation.h Situation/Situation.xsh Situation/DOMhandler_stubs.h ) },
 	      @extras,
 );
 

@@ -16,7 +16,9 @@
 # Copyright (C) 1999-2000 Ginger Alliance Ltd.
 # All Rights Reserved.
 # 
-# Contributor(s):
+# Contributor(s): Nicolas Trebst and Anselm Kruis, science+computing ag
+#                 n.trebst@science-computing.de
+#                 a.kruis@science-computing.de
 # 
 # Alternatively, the contents of this file may be used under the
 # terms of the GNU General Public License Version 2 or later (the
@@ -40,9 +42,12 @@ use vars qw( $VERSION @ISA @EXPORT_OK %EXPORT_TAGS );
 require Exporter;
 require DynaLoader;
 
+use XML::Sablotron::Processor;
+use XML::Sablotron::Situation;
+
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.97';
+$VERSION = '0.98';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -89,12 +94,12 @@ sub SablotProcess {
 #sub SablotUnregMessageHandler {
 #    UnregMessageHandler(@_);
 
-sub new {
+sub new (@_) {
     my $class = shift;
     $class = (ref $class) || $class;
     my $self = {};
     bless $self, $class;
-    my $foo = new XML::Sablotron::Processor();
+	my $foo = new XML::Sablotron::Processor( @_ );
     $self->{_processor} = $foo;
     #used to keep references to trees passed in via AddArgTree
     #needed for autodisposed trees
@@ -160,7 +165,12 @@ sub addParam {
 
 sub process {
     my $self = shift;
-    return $self->{_processor}->process(@_);
+
+	if ( ref $_[2] ) {
+		return $self->{_processor}->processExt(@_);
+	} else {
+		return $self->{_processor}->process(@_);
+	}
 }
 
 ##############
@@ -295,133 +305,47 @@ DESTROY {
     }
 }
 
-bootstrap XML::Sablotron $VERSION;
+eval {
+    bootstrap XML::Sablotron $VERSION;
+};
+
+if ($@) {
+    warn <<"eol";
+It seems, that the Sablotron library couldn't be found. Please, check,
+whether you have installed this library on your system, and whether it is
+visible to the current process. Check the LD_LIBRARY_PATH on *nix
+platforms or PATH on Windows.
+
+To install Sablotron visit 
+http://www.gingerall.org/charlie/ga/xml/d_sab.xml
+
+eol
+    die "Sablotron library could not be loaded ($@)";
+}
+
+
+
+package XML::Sablotron::Common;
+
+#############################################
+# Nicolas:
+# Do some error reporting; called usually 
+# from C (just a proposal, I found this handy 
+# in other projects)
+sub _report_err {
+    my ($pkg, $file, $line, $func) = caller 1;
+
+    my $message = shift;
+
+    printf STDERR "ERROR in $pkg:\n";
+    printf STDERR "      \"$message\"\n";
+    printf STDERR "      in $func, $file:$line\n";
+}
+
+
 
 1;
 
-############################################################
-# inner object (holds circular reference)
-############################################################
-package XML::Sablotron::Processor;
-
-use vars qw( $_unique );
-
-sub new {
-    my $class = shift;
-    $class = (ref $class) || $class;
-    my $self = {};
-    bless $self,  $class;
-    $self->{_handle} = $self->_createProcessor();
-    $self->{_handlers} = []; #confusing names, aren't? :-)
-    return $self;
-}
-
-my $pkg_template = <<'eof';
-sub new {
-my $cn = shift;
-bless {}, $cn;
-}
-eof
-
-sub RegHandler {
-    my ($self, $type, $ref) = @_;
-    my $wrapper;
-    if ((ref $ref eq "HASH")) {
-	$_unique++;
-	my $classname = "sablot_handler_$_unique";
-	eval ("package $classname;\n" . $pkg_template);
-	no strict;
-	foreach (keys %$ref) {
-	    *{"${classname}::$_"} = $$ref{$_};
-	}
-	use strict;
-	$wrapper = eval "new $classname()";
-    } else {
-	$wrapper = $ref;
-    }
-    
-    warn "Trying to register the same handler twice\n"
-      if grep {${$_}[0] == $type and ${$_}[1] == $wrapper} 
-	@{$self->{_handlers}}; 
-
-    #the trick with @foo is very important for a correct refernce counting
-    my @foo = ($type, $wrapper);
-    push @{$self->{_handlers}}, \@foo;;
-
-    my $ret = $self->_regHandler(@foo);
-
-    return $ret;
-}
-
-sub UnregHandler {
-    my ($self, $type, $wrapper) = @_;
-    for (my $i = 0; $i <= $#{$self->{_handlers}}; $i++) {
-	my $he = ${$self->{_handlers}}[$i];
-	if ($$he[0] == $type and $$he[1] = $wrapper) {
-	    $self->_unregHandler($$he[0], $$he[1]);
-	    splice @{$self->{_handlers}}, $i, 1;
-	    last;
-	}
-    }
-}
-
-sub _releaseHandlers {
-    my $self = shift;
-    my $he; #handler entry
-    foreach $he (@{$self->{_handlers}}) {
-	$self->_unregHandler($$he[0], $$he[1]);
-    }
-    @{$self->{_handlers}} = ();
-}
-
-sub SetContentType {
-    my ($self, $value) = @_;
-    return $self->{_contentType} = $value;
-}
-
-sub GetContentType {
-    my ($self, $value) = @_;
-    return $self->{_contentType};
-}
-
-sub SetEncoding {
-    my ($self, $value) = @_;
-    return $self->{_encoding} = $value;
-}
-
-sub GetEncoding {
-    my ($self, $value) = @_;
-    return $self->{_encoding};
-}
-
-DESTROY {
-    my $self = shift;
-    $self->_releaseHandlers();
-    $self->_destroyProcessor();
-};
-  
-########################################
-# situation object
-
-package XML::Sablotron::Situation;
-
-use constant SAB_NO_ERROR_REPORTING => 0x1;
-use constant SAB_PARSE_PUBLIC_ENTITIES => 0x2;
-use constant SAB_DISABLE_ADDING_META => 0x4;
-
-sub new {
-    my $class = shift;
-    $class = ref $class || $class;
-    my $self = {};
-    bless $self, $class;
-    $self->{_handle} = _getNewSituationHandle($class);
-    return $self;
-}
-
-sub DESTROY {
-    my $self = shift;
-    $self->_releaseHandle();
-}
 
 __END__
 
@@ -462,10 +386,10 @@ See Sablotron documentation for more details.
 You do _not_ need to download any other Perl packages to run
 the XML::Sablotron package.
 
-Since version 0.6 Sablotron supports very useful subset of the DOM
-specification, you may access the parsed trees, modify them and process
-them, as well as serialize them into files etc. The DOM trees are not
-dependent on the processor object, so you may use them for data or
+Since version 0.60 Sablotron supports DOM Level2 methods to
+access parsed trees, modify them and process them, as well as 
+serialize them into files etc. The DOM trees are not dependent 
+on the processor object, so you may use them for data or
 stylesheet caching.
 
 =head1 USAGE
@@ -994,7 +918,7 @@ example:
 
 =head1 HANDLERS
 
-Currently, Sablotron supports three flavors of handlers.
+Currently, Sablotron supports four types of handlers.
 
 =over 4
 
@@ -1007,9 +931,6 @@ Currently, Sablotron supports three flavors of handlers.
 =item * miscellaneous handler (3)
 
 =back
-
-I have to say that in this moment the XML::Sablotron
-extension supports only the first two of them.
 
 =head2 General interface format
 
@@ -1222,10 +1143,9 @@ produced by the engine are of a bit different flavors then 'real' SAX
 events; think about this feature as about SAX-like handler.
 
 You may set this handler if you want to catch output events and
-process them as you wish. Note, that there are XML::SAXDriverr::Sablot
-and XML::SAXFilter::Sablot Perl modules available, so you don't need
-to deal with SAX-like handler, if you want to use Sablotron in
-standard  SAX chains.
+process them as you wish. Note, that there is XML::SAXDriver::Sablotron
+module available, so you don't need to deal with the SAX-like handler, 
+if you want to use Sablotron as standard SAX driver.
 
 =head2 SAX handler - interface
 

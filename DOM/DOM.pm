@@ -37,7 +37,7 @@ package XML::Sablotron::DOM;
 use strict;
 use Carp;
 
-require XML::Sablotron;
+use XML::Sablotron;
 
 require Exporter;
 require DynaLoader;
@@ -57,7 +57,7 @@ my @_constants = qw ( ELEMENT_NODE ATTRIBUTE_NODE TEXT_NODE
                       QUERY_PARSE_ERR QUERY_EXECUTION_ERR NOT_OK_ERR
                       );
 
-use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK @EXPORT
+use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK @EXPORT $useUniqueWrappers
 	   );
 @ISA = qw(Exporter DynaLoader);
 
@@ -79,9 +79,12 @@ my @_functions = qw ( parse
 		     'functions' => \@_functions,
 		   );
 
-@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} }, q($useUniqueWrappers) );
 
 @EXPORT = qw(createNode);
+
+# global flag 
+$useUniqueWrappers=0;
 
 #constants for node types
 use constant ELEMENT_NODE => 1;
@@ -120,9 +123,6 @@ use constant INVALID_NODE_TYPE_ERR => 16;
 use constant QUERY_PARSE_ERR => 17;
 use constant QUERY_EXECUTION_ERR => 18;
 use constant NOT_OK => 19;
-
-# executable part of the module
-bootstrap XML::Sablotron::DOM $XML::Sablotron::VERSION;
 
 1;
 
@@ -166,7 +166,7 @@ sub nodeValue {
 }
 
 sub childNodes {
-    return XML::Sablotron::DOM::NodeList::_new(\@_,
+    return XML::Sablotron::DOM::NodeList::_new([@_],
 					       \&_childIndex,
 					       \&_childCount);
 }
@@ -302,7 +302,7 @@ sub getAttributes {
 }
 
 sub attributes {
-    return XML::Sablotron::DOM::NamedNodeMap::_new(\@_,
+    return XML::Sablotron::DOM::NamedNodeMap::_new([@_],
 						   \&_attrIndex,
 						   \&_attrCount,
 						   1);# 1 == readonly
@@ -327,17 +327,6 @@ sub value { #need _fix_ for entity references
     return $self->_getOrSet(\&getNodeValue, 
 			    \&setNodeValue, 
 			    @_);
-}
-
-sub ownerElement {
-    my $self = shift;
-    my $parent = $self->parentNode(@_);
-    if ( defined($parent) 
-	 && $parent->getNodeType(@_) == XML::Sablotron::DOM::ELEMENT_NODE ) {
-	return $parent;
-    } else {
-        return undef;        
-    }
 }
 
 #################### CharacterData ####################
@@ -522,11 +511,11 @@ sub length {
 #################### NamedNodeMap ####################
 package XML::Sablotron::DOM::NamedNodeMap;
 use vars qw( @ISA );
-@ISA = qw( XML::Sablotron::DOM::Node );
+@ISA = qw( XML::Sablotron::DOM::NodeList );
 
 sub _new {
     # ([$parent, $sit or nothing], $ritem, $rlength, $readonly) == @_;
-    return bless(\@_,'XML::Sablotron::DOM::NodeList');
+    return bless(\@_,'XML::Sablotron::DOM::NamedNodeMap');
 }
 
 sub getNamedItem {

@@ -1,162 +1,43 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- * The contents of this file are subject to the Mozilla Public
- * License Version 1.1 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of
- * the License at http://www.mozilla.org/MPL/
- * 
- * Software distributed under the License is distributed on an "AS
- * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * rights and limitations under the License.
- * 
- * The Original Code is the XML::Sablotron::DOM module.
- * 
- * The Initial Developer of the Original Code is Ginfer Alliance Ltd.
- * Portions created by Ginger Alliance are 
- * Copyright (C) 1999-2000 Ginger Alliance Ltd..  
- * All Rights Reserved.
- * 
- * Contributor(s):
- * 
- * Alternatively, the contents of this file may be used under the
- * terms of the GNU General Public License Version 2 or later (the
- * "GPL"), in which case the provisions of the GPL are applicable 
- * instead of those above.  If you wish to allow use of your 
- * version of this file only under the terms of the GPL and not to
- * allow others to use your version of this file under the MPL,
- * indicate your decision by deleting the provisions above and
- * replace them with the notice and other provisions required by
- * the GPL.  If you do not delete the provisions above, a recipient
- * may use your version of this file under either the MPL or the
- * GPL.
- */
+# 
+# The contents of this file are subject to the Mozilla Public
+# License Version 1.1 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of
+# the License at http://www.mozilla.org/MPL/
+# 
+# Software distributed under the License is distributed on an "AS
+# IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# rights and limitations under the License.
+# 
+# The Original Code is the XML::Sablotron::DOM module.
+# 
+# The Initial Developer of the Original Code is Ginger Alliance Ltd.
+# Portions created by Ginger Alliance are 
+# Copyright (C) 1999-2000 Ginger Alliance Ltd.
+# All Rights Reserved.
+# 
+# Contributor(s): science+computing ag:
+#                 Nicolas Trebst, n.trebst@science-computing.de
+#                 Anselm Kruis,    a.kruis@science-computing.de
+# 
+# Alternatively, the contents of this file may be used under the
+# terms of the GNU General Public License Version 2 or later (the
+# "GPL"), in which case the provisions of the GPL are applicable 
+# instead of those above.  If you wish to allow use of your 
+# version of this file only under the terms of the GPL and not to
+# allow others to use your version of this file under the MPL,
+# indicate your decision by deleting the provisions above and
+# replace them with the notice and other provisions required by
+# the GPL.  If you do not delete the provisions above, a recipient
+# may use your version of this file under either the MPL or the
+# GPL.
+# 
 
-#include "EXTERN.h"
-#include "perl.h"
-#include "XSUB.h"
+#
+# ../Sablotron.xs includes this file. 
+#
 
-#include <stdio.h>
-#include <sdom.h>
-#include <sablot.h>
-
-/************************************************************/
-/* globals */
-/************************************************************/
-
-/* classes */
-/* must match to SDOM_NodeType */
-char* __classNames[] = {"", /* zero is not defined */
-                        "XML::Sablotron::DOM::Element", 
-                        "XML::Sablotron::DOM::Attribute", 
-                        "XML::Sablotron::DOM::Text", 
-                        "XML::Sablotron::DOM::CDATASection", 
-                        "XML::Sablotron::DOM::EntityReference",
-                        "XML::Sablotron::DOM::Entity", 
-                        "XML::Sablotron::DOM::ProcessingInstruction", 
-                        "XML::Sablotron::DOM::Comment", 
-                        "XML::Sablotron::DOM::Document", 
-                        "XML::Sablotron::DOM::DocumentType", 
-                        "XML::Sablotron::DOM::DocumentFragment", 
-                        "XML::Sablotron::DOM::Notation"};
-
-/************************************************************/
-/* error handling */
-/************************************************************/
-
-/* keep sync with SDOM_Exception enumeration */
-char* __errorNames[] = {"DOM_OK", /*0*/
-                        "INDEX_SIZE_ERR", /*1*/
-                        "DOMSTRING_SIZE_ERR", /*2*/
-                        "HIERARCHY_REQUEST_ERR", /*3*/
-                        "WRONG_DOCUMENT_ERR", /*4*/
-                        "INVALID_CHARACTER_ERR", /*5*/
-                        "NO_DATA_ALLOWED_ERR", /*6*/ 
-                        "NO_MODIFICATION_ALLOWED_ERR", /*7*/
-                        "NOT_FOUND_ERR", /*8*/
-                        "NOT_SUPPORTED_ERR", /*9*/
-                        "INUSE_ATTRIBUTE_ERR", /*10*/
-                        "INVALID_STATE_ERR", /*11*/
-                        "SYNTAX_ERR", /*12*/
-                        "INVALID_MODIFICATION_ERR", /*13*/
-                        "NAMESPACE_ERR", /*14*/
-                        "INVALID_ACCESS_ERR", /*15*/
-                        /*non spec errors - continued*/
-                        "INVALID_NODE_TYPE_ERR", /*16*/
-                        "QUERY_PARSE_ERR", /*17*/
-                        "QUERY_EXECUTION_ERR", /*18*/
-                        "NOT_OK" /*19*/
-};
-
-/* check function return value */
-#define DE(sit, status) if (status) \
-                      croak("XML::Sablotron::DOM(Code=%d, Name=%s, Msg=%s)", \
-                            status, __errorNames[status], \
-                            SDOM_getExceptionMessage(sit))
-
-/* check the validity of the node */
-#define CN(node) if (! node) croak("XML::Sablotron::DOM(Code=-1, Name='INVALID_NODE_ERR')")
-
-/************************************************************/
-/* globals for document */
-/************************************************************/
-#define DOC_HANDLE(doc) (SDOM_Document)SvIV(*hv_fetch((HV*)SvRV(doc), "_handle", 7, 0))
-
-#define SIT_HANDLE(sit) (SablotSituation)SvIV(*hv_fetch((HV*)SvRV(sit), "_handle", 7, 0))
-
-#define SIT_PARAM(cnt) ((items >= cnt) ? ST(cnt - 1) : &PL_sv_undef)
-
-#define SIT_SMART(sit) (SvOK(sit) ? SIT_HANDLE(sit) : __sit)
-
-#define NODE_HANDLE(node) (SDOM_Node)SvIV(*hv_fetch((HV*)SvRV(node), "_handle", 7, 0))
-
-SV* __createNode(SablotSituation situa, SDOM_Node handle)
-{
-    HV* hash;
-    SV* retval;
-    SDOM_NodeType type;
-    /* check and/or create inner SV* - used for validity checks*/
-    SV* inner = (SV*)SDOM_getNodeInstanceData(handle);
-    if (!inner) {
-        /* printf("+++> creating new inner\n"); */
-        inner = newSViv((int)handle);
-        /* store inner SV to node */
-        SDOM_setNodeInstanceData(handle, inner);
-    } else {
-        /* printf("---> reusing the inner %d\n", SvIV(inner)); */
-    }
-    
-    /* create new hash and store the handle into it */
-    hash = newHV();
-    hv_store(hash, "_handle", 7, SvREFCNT_inc(inner), 0);
-    /* create blessed reference */
-    retval = newRV_noinc((SV*)hash);
-    DE( situa, SDOM_getNodeType(situa, handle, &type) );
-    sv_bless(retval, gv_stashpv(__classNames[type], 0));
-
-    return retval;
-}
-
-
-/************************************************************/
-/* dispose calback */
-/************************************************************/
-
-void __nodeDisposeCallback(SDOM_Node node) 
-{
-    SV* pnode = (SV*)SDOM_getNodeInstanceData(node);
-    if ( pnode ) sv_setiv(pnode, 0);
-}
-
-/*************************************************************/
-/*  get implicit situation */
-/*************************************************************/
-SablotSituation __sit;
-
-/************************************************************/
-/* DOM */
-/************************************************************/
-
-MODULE = XML::Sablotron::DOM		PACKAGE = XML::Sablotron::DOM
+MODULE = XML::Sablotron		PACKAGE = XML::Sablotron::DOM
 PROTOTYPES: ENABLE
 
 BOOT:
@@ -228,12 +109,35 @@ testsit(val)
 #* NODE
 #************************************************************
 
-MODULE = XML::Sablotron::DOM	        PACKAGE = XML::Sablotron::DOM::Node
+MODULE = XML::Sablotron	        PACKAGE = XML::Sablotron::DOM::Node
 
 int 
 _clearInstanceData(object)
      SV*      object
      CODE:
+     if ( __useUniqueDOMWrappers() ) 
+     {
+         HV * hash = (HV*)SvRV(object);
+         SDOM_Node node = NODE_HANDLE(object);
+         if ( node ) {
+             /* The Node exists. This should only happen, if _clearInstanceData
+                gets called manually */
+             HV * inner = (HV*)SDOM_getNodeInstanceData( node );
+             if ( inner ) {
+                 __checkNodeInstanceData( node , inner );
+                 /* inner == hash */
+                 if ( SvREFCNT(hash) == 2 ) {
+                     SDOM_setNodeInstanceData( node , NULL);
+                     SvREFCNT_dec(hash);
+                 }
+             }
+             /* set the node address to NULL */ 
+             sv_setiv( *hv_fetch( hash, "_handle", 7, 0), 0 );
+         }
+         RETVAL = ( SvREFCNT(hash) == 1 );
+     } 
+     else /* not __useUniqueDOMWrappers() */
+     {
      SV* inner =  *hv_fetch((HV*)SvRV(object), "_handle", 7, 0);
      if (inner && (SvREFCNT(inner) == 2) ) {
          /* I'm the last one owning the reference to inner handle */
@@ -243,6 +147,7 @@ _clearInstanceData(object)
          RETVAL = 1;
      } else {
          RETVAL = 0;
+     }
      }
      OUTPUT:
      RETVAL
@@ -674,7 +579,6 @@ xql(object, expr, ...)
      RETVAL = (AV*)sv_2mortal((SV*)newAV());
      SDOM_getNodeListLength(situa, list, &len);
      for (i = 0; i < len; i++) {
-         SDOM_Node foo;
          SDOM_Node node;
          SDOM_getNodeListItem(situa, list, i, &node);
          av_push(RETVAL, __createNode(situa, node));
@@ -682,6 +586,24 @@ xql(object, expr, ...)
      SDOM_disposeNodeList(situa, list);
      OUTPUT:
      RETVAL
+
+int 
+compareNodes(object, object2, ...) 
+     SV*      object
+     SV*      object2
+     CODE:
+     SV* sit = SIT_PARAM(3);
+     int ret;
+     SDOM_Node node = NODE_HANDLE(object);
+     SDOM_Node node2 = NODE_HANDLE(object2);
+     SablotSituation situa = SIT_SMART(sit);
+     CN(node);
+     CN(node2);
+     DE( situa, SDOM_compareNodes(situa, node, node2, &ret) );
+     RETVAL = ret;
+     OUTPUT:
+     RETVAL
+
 
 AV*
 xql_ns(object, expr, nsmap, ...)
@@ -745,7 +667,7 @@ xql_ns(object, expr, nsmap, ...)
 #* DOCUMENT *
 #************************************************************
 
-MODULE = XML::Sablotron::DOM	        PACKAGE = XML::Sablotron::DOM::Document
+MODULE = XML::Sablotron	        PACKAGE = XML::Sablotron::DOM::Document
 
 SV*
 _new(object, sit)
@@ -892,7 +814,7 @@ createEntityReference(object, ...)
      SV*      object
      CODE:
      SV* sit = SIT_PARAM(2);
-     SDOM_Node handle;
+     SDOM_Node handle=NULL;
      SDOM_Document doc = DOC_HANDLE(object);
      SablotSituation situa = SIT_SMART(sit);
      CN(doc);
@@ -906,7 +828,7 @@ createEntity(object, ...)
      SV*      object
      CODE:
      SV* sit = SIT_PARAM(2);
-     SDOM_Node handle;
+     SDOM_Node handle=NULL;
      SDOM_Document doc = DOC_HANDLE(object);
      SablotSituation situa = SIT_SMART(sit);
      CN(doc);
@@ -952,7 +874,7 @@ createDocumentType(object, ...)
      SV*      object
      CODE:
      SV* sit = SIT_PARAM(2);
-     SDOM_Node handle;
+     SDOM_Node handle=NULL;
      SDOM_Document doc = DOC_HANDLE(object);
      SablotSituation situa = SIT_SMART(sit);
      CN(doc);
@@ -966,7 +888,7 @@ createDocumentFragment(object, ...)
      SV*      object
      CODE:
      SV* sit = SIT_PARAM(2);
-     SDOM_Node handle;
+     SDOM_Node handle=NULL;
      SDOM_Document doc = DOC_HANDLE(object);
      SablotSituation situa = SIT_SMART(sit);
      CN(doc);
@@ -980,7 +902,7 @@ createNotation(object, ...)
      SV*      object
      CODE:
      SV* sit = SIT_PARAM(2);
-     SDOM_Node handle;
+     SDOM_Node handle=NULL;
      SDOM_Document doc = DOC_HANDLE(object);
      SablotSituation situa = SIT_SMART(sit);
      CN(doc);
@@ -1025,12 +947,21 @@ createAttributeNS(object, namespaceURI, qname, ...)
      OUTPUT:
      RETVAL
 
+void
+lockDocument(object, ...)
+     SV*      object
+     CODE:
+     SV* sit = SIT_PARAM(2);
+     SDOM_Document doc = DOC_HANDLE(object);
+     SablotSituation situa = SIT_SMART(sit);
+     CN( doc );
+     DE( situa, SablotLockDocument(situa, doc) );
 
 #************************************************************
 #* ELEMENT *
 #************************************************************
 
-MODULE = XML::Sablotron::DOM	        PACKAGE = XML::Sablotron::DOM::Element
+MODULE = XML::Sablotron	        PACKAGE = XML::Sablotron::DOM::Element
 
 char*
 getAttribute(object, name, ...)
@@ -1358,4 +1289,30 @@ toString(object, ...)
      RETVAL
      CLEANUP:
      if (buff) SablotFree(buff);
+
+#************************************************************
+#* ATTRIBUTE *
+#************************************************************
+
+MODULE = XML::Sablotron	        PACKAGE = XML::Sablotron::DOM::Attribute
+
+
+SV*
+ownerElement(object, ...)
+     SV*      object
+     CODE:
+     SV* sit = SIT_PARAM(2);
+     SDOM_Node parent;
+     SablotSituation situa = SIT_SMART(sit);
+     SDOM_Node node = NODE_HANDLE(object);
+     CN(node);
+     DE( situa, SDOM_getAttributeElement(situa, node, &parent) );
+     if (parent) {
+         /* _fix_ check memory leaks */
+         RETVAL = __createNode(situa, parent);
+     } else {
+         RETVAL = &PL_sv_undef;
+     }
+     OUTPUT:
+     RETVAL
 
