@@ -103,6 +103,17 @@ To link a library with a different name, type:
   perl Makefile.PL JSLIBNAME=<lib_name> JSLIBPATH=<path_to_jslib.so>
 ------------------------------------------------------------
 
+------------------------------------------------------------
+Debugger and readline
+
+The Sablotron processor supports a command-line debugging. By default
+it doesn't require any special libraries, but it may be
+compiled/linked with a GNU readline support. in such a case you need
+to link a readline library to the perl extension too.
+
+To do it, add LIBS='-lreadline -lncurses' to Makefile.PL (this sample
+is valid for most Linuxes).
+
 
 4. Environment
 ========================================

@@ -88,8 +88,10 @@ __rtti_user, __builtin_vec_new and/or others.
 
 Solution is not simple and not deterministic. You have to force linker
 to use some standard libraries (like -lgcc) while linking Perl
-extension. To do it, add -l directive into Makefile.PL (just after
--lexpat & Co.).
+extension. To do it, set the LIBS='-lgcc' (or similar) as a
+Makefile.PL parameter.
+
+To pass required librraies to linker, you may use the LIBS parameter to Makefile.PL (e.g. perl Makefile.PL LIBS='-liconv -lreadline).
 
 HTH
 

@@ -46,6 +46,10 @@ Revision history for Perl extension Sablotron.
 0.70 Wed Sep 19 10:13:00 2001
 	- XML::Sablotron::SAXBuiler added
 
-0.80 Thu Jan 10 12:38:00 2001
+0.80 Thu Jan 10 12:38:00 2002
 	- XML::Sablotron::Situation::setOptions added
 	- JavaScript may be linked (Makefile.PL)
+
+0.97 Mon Dec 30 14:29:00 2002
+	- changes related to the development of Sablotron
+	- mapping of namespaces added to xql() function (DOM)

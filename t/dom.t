@@ -41,7 +41,7 @@
 
 use vars qw ( $loaded );
 
-BEGIN { $| = 1; print "1..29\n"; }
+BEGIN { $| = 1; print "1..39\n"; }
 END {print "not ok 1\n" unless $loaded;}
 
 require  XML::Sablotron;
@@ -91,21 +91,28 @@ _eof_
 my $test = 1;
 my $sit = new XML::Sablotron::Situation();
 
-# test ctreate the document
+# test create the document
 $test++;
 my $doc = new XML::Sablotron::DOM::Document( SITUATION => $sit );
 my $type = $doc->getNodeType();
 print ($type == 9 ? "ok $test\n" : "not ok $test\n");
 
+# test document type
+$test++;
+my $type2 = $doc->nodeType();
+print ($type2 == 9 ? "ok $test\n" : "not ok $test\n");
+
 # test document name
 $test++;
 my $name = $doc->getNodeName();
-print ($name eq "#document" ? "ok $test\n" : "not ok $test\n");
+my $name2 = $doc->nodeName();
+print ($name eq "#document" && $name eq $name2 ? "ok $test\n" : "not ok $test\n");
 
 # test document value
 $test++;
 my $value = $doc->getNodeValue();
-print (! defined $value ? "ok $test\n" : "not ok $test\n");
+my $value2 = $doc->nodeValue();
+print (! defined $value && ! defined $value ? "ok $test\n" : "not ok $test\n");
 
 # test exception for setNodeName
 ## $test++;
@@ -115,7 +122,8 @@ print (! defined $value ? "ok $test\n" : "not ok $test\n");
 # test parent node for document 
 $test++;
 my $parent = $doc->getParentNode();
-print (!defined $parent ? "ok $test\n" : "not ok $test\n");
+my $parent2 = $doc->parentNode();
+print (!defined $parent && !defined $parent2 ? "ok $test\n" : "not ok $test\n");
 
 # test owner document for doc
 $test++;
@@ -125,31 +133,37 @@ print (!defined $odoc ? "ok $test\n" : "not ok $test\n");
 # test first child for empty doc
 $test++;
 my $child = $doc->getFirstChild();
-print (!defined $child ? "ok $test\n" : "not ok $test\n");
+my $child2 = $doc->firstChild();
+print (!defined $child && !defined $child2 ? "ok $test\n" : "not ok $test\n");
 
 # test last child for empty doc
 $test++;
 $child = $doc->getLastChild();
-print (!defined $child ? "ok $test\n" : "not ok $test\n");
+$child2 = $doc->lastChild();
+print (!defined $child && !defined $child2 ? "ok $test\n" : "not ok $test\n");
 
 ############# Element tests ################
 
-# test new element
+# test new element 
 $test++;
 my $e = $doc->createElement("boot");
 $type = $e->getNodeType();
-print ($type == 1 ? "ok $test\n" : "not ok $test\n");;
+$type2 = $e->nodeType();
+print ($type == 1 && $type2 == 1 ? "ok $test\n" : "not ok $test\n");;
 
-# test node name
+# test node name #10
 $test++;
 $name = $e->getNodeName();
-print ($name eq "boot" ? "ok $test\n" : "not ok $test\n");;
+$name2 = $e->nodeName();
+print ($name eq "boot" && $name2 eq "boot" ? "ok $test\n" : "not ok $test\n");;
 
 # test rename node (element)
 $test++;
+$e->nodeName("root2");
+$name2 = $e->nodeName();
 $e->setNodeName("root");
 $name = $e->getNodeName();
-print ($name eq "root" ? "ok $test\n" : "not ok $test\n");;
+print ($name eq "root" && $name2 eq "root2" ? "ok $test\n" : "not ok $test\n");;
 
 # test set attribute
 $test++;
@@ -172,8 +186,9 @@ print ($doc->{_handle} == $doc1->{_handle} ? "ok $test\n" : "not ok $test\n");
 # test owner document
 $test++;
 $doc1 = $e->getOwnerDocument();
+my $doc2 = $e->ownerDocument();
 #print "+++> $doc, $doc1\n";
-print ($doc->equals($doc1) ? "ok $test\n" : "not ok $test\n");
+print ($doc->equals($doc1) && $doc->equals($doc2) ? "ok $test\n" : "not ok $test\n");
 
 ############################################################
 # test tree functions
@@ -184,31 +199,71 @@ my $c2 = $doc->createElement("child2");
 my $c3 = $doc->createElement("child3");
 my $cx = $doc->createElement("childX");
 
-$e->appendChild($c1);
+my $cc1 = $e->appendChild($c1);
 $e->appendChild($c3);
-$e->insertBefore($c2, $c3);
+my $cc3 = $e->insertBefore($c2, $c3);
 
-# test fist child
+# test childNodes and childNodesArr
+$test++;
+my $nodes = $e->childNodes();
+my $nodeArr = $e->childNodesArr();
+my $i = 0;
+my $mychild = $e->firstChild();
+my $result = 1;
+while ( defined($mychild) ) {
+    $result = $result && ( $nodes->item($i)->equals($mychild) );
+    $result = $result && ( $nodeArr->[$i]->equals($mychild) );
+    $i++;
+    $mychild = $mychild->nextSibling();
+};
+$result = $result && ( $nodes->length() == $i );
+$result = $result && ( @$nodeArr == $i );
+$result = $result && ( !defined($nodes->item($i)) );
+#childNodes attributte is live:
+my $tmp = $doc->createElement("tmp");
+$e->appendChild($tmp);
+$result = $result && ( $nodes->item($i)->equals($tmp) );
+$e->removeChild($tmp);
+
+print ($result ? "ok $test\n" : "not ok $test\n");
+
+# test first child
 $test++;
 $e1 = $e->getFirstChild();
-print ($e1->equals($c1) ? "ok $test\n" : "not ok $test\n");
+my $e2 = $e->firstChild();
+print ($e1->equals($c1) && $e2->equals($c1) ? "ok $test\n" : "not ok $test\n");
 
 #test last child
 $test++;
 $e1 = $e->getLastChild();
-print ($e1->equals($c3) ? "ok $test\n" : "not ok $test\n");
+$e2 = $e->lastChild();
+print ($e1->equals($c3) && $e2->equals($c3) ? "ok $test\n" : "not ok $test\n");
 
 # test next sibling
 $test++;
 $e1 = $e->getFirstChild();
 $e1 = $e1->getNextSibling();
-print ($e1->equals($c2) ? "ok $test\n" : "not ok $test\n");
+$e2 = $e->firstChild();
+$e2 = $e2->nextSibling();
+print ($e1->equals($c2) && $e2->equals($c2) ? "ok $test\n" : "not ok $test\n");
 
 # test previous sibling
 $test++;
 $e1 = $e->getLastChild();
 $e1 = $e1->getPreviousSibling();
-print ($e1->equals($c2) ? "ok $test\n" : "not ok $test\n");
+$e2 = $e->lastChild();
+$e2 = $e2->previousSibling();
+print ($e1->equals($c2) && $e2->equals($c2) ? "ok $test\n" : "not ok $test\n");
+
+# test insert before child
+$test++;
+my $ct1 = $doc->createElement("temp1");
+$e->appendChild($ct1);
+my $ct2 = $doc->createElement("temp2");
+my $cct2 = $e->insertBefore($ct2,$ct1);
+print ($e->lastChild()->previousSibling()->equals($cct2) ? "ok $test\n" : "not ok $test\n");
+$e->removeChild($ct1);
+$e->removeChild($cct2);
 
 # test replace child
 $test++;
@@ -219,9 +274,50 @@ print ($e1->equals($cx) ? "ok $test\n" : "not ok $test\n");
 
 # test remove child
 $test++;
-$e->removeChild($c3);
+my $c3Name = $c3->nodeName();
+my $removed = $e->removeChild($c3);
+my $removedName = $removed->nodeName();
 $e1 = $e->getLastChild();
-print ($e1->equals($cx) ? "ok $test\n" : "not ok $test\n");
+print ($e1->equals($cx) && $c3Name eq $removedName ? "ok $test\n" : "not ok $test\n");
+
+# test append child
+$test++;
+$ct1 = $doc->createElement("temp");
+$ct2 = $e->appendChild($ct1);
+print ($e->lastChild()->equals($ct2) ? "ok $test\n" : "not ok $test\n");
+$e->removeChild($ct2);
+
+# test hasChildNodes
+$test++;
+print ($e->hasChildNodes() && ! $e->firstChild()->hasChildNodes() ? "ok $test\n" : "not ok $test\n");
+
+# test cloneNode
+$test++;
+$e->appendChild($e->lastChild()->cloneNode(1));
+print ($e->lastChild()->nodeName() eq $e->lastChild()->previousSibling()->nodeName() ? "ok $test\n" : "not ok $test\n");
+$e->removeChild($e->lastChild());
+
+# test normalize
+$test++;
+# does nothing :)
+$e->normalize();
+print ("ok $test\n");
+
+# test isSupported
+$test++;
+# returns false already
+print ( !$e->isSupported("someFeature") ? "ok $test\n" : "not ok $test\n");
+
+#test createElementNS #30
+$test++;
+$e->appendChild($doc->createElementNS("uri_a","a:name"));
+print ($e->lastChild()->nodeName() eq "a:name" ? "ok $test\n" : "not ok $test\n");
+
+# test namespaceURI
+$test++;
+print ($e->lastChild()->namespaceURI() eq "uri_a" ? "ok $test\n" : "not ok $test\n");
+
+$e->removeChild($e->lastChild());
 
 # test textual node
 $test++;
@@ -232,18 +328,20 @@ print ($type == 3 ? "ok $test\n" : "not ok $test\n");
 # test get node value
 $test++;
 my $str = $t->getNodeValue();
-print ($str eq "my text" ? "ok $test\n" : "not ok $test\n");
+my $str2 = $t->nodeValue();
+print ($str eq "my text" && $str2 eq "my text" ? "ok $test\n" : "not ok $test\n");
 
 # test set node value
 $test++;
+$t->nodeValue("new text 2");
+$str2 = $t->nodeValue();
 $t->setNodeValue("new text");
 $str = $t->getNodeValue();
-print ($str eq "new text" ? "ok $test\n" : "not ok $test\n");
+print ($str eq "new text" && $str2 eq "new text 2" ? "ok $test\n" : "not ok $test\n");
 
 $c1->appendChild($t);
 
 # test clone
-
 $test++;
 my $docc = new XML::Sablotron::DOM::Document( SITUATION => $sit );
 my $cloned = $docc->cloneNode($c1, 1);
@@ -251,21 +349,52 @@ $docc->appendChild($cloned);
 $str = $docc->getFirstChild->getFirstChild->getNodeValue;
 print ($str eq "new text" ? "ok $test\n" : "not ok $test\n");
 
-# test get attributes
+# test declaring namespace via element::setAttribute
 $test++;
-$cx->setAttributes({ a =>"a1", 
-		     b => "b1", 
-		     c => "c1"});
-my $attrs = $cx->getAttributes();
-my $ok = $$attrs{a} eq "a1" && $$attrs{b} eq "b1" && $$attrs{c} eq "c1";
-print ($ok ? "ok $test\n" : "not ok $test\n");
+$ct1 = $doc->createElement("e_temp");
+$ct2 = $doc->createElement("e2_temp");
+my $ct3 = $doc->createElement("e3_temp");
+$e->appendChild($ct1);
+$ct1->appendChild($ct2);
+$e->setAttribute("xmlns:tmp","uri_tmp");
+$ct2->appendChild($ct3);
+$ct3->setAttribute("tmp:attr","val");
+$result = $ct3->getAttribute("xmlns:tmp") eq "uri_tmp";
+my $attr2 = $doc->createAttribute("attr2");
+$ct3->setAttributeNode($attr2);
+$result = $result && $ct3->removeAttributeNode($attr2)->equals($attr2); 
+$e->removeChild($ct1);
+print ( $result ? "ok $test\n" : "not ok $test\n");
 
-#test removeAttribute
+# test element::getAttributeNS
 $test++;
-$cx->removeAttribute("c");
-$attrs = $cx->getAttributes();
-$ok = $$attrs{a} eq "a1" && $$attrs{b} eq "b1";
-print ($ok ? "ok $test\n" : "not ok $test\n");
+$ct1 = $doc->createElement("e_temp");
+$e->appendChild($ct1);
+$ct1->setAttribute("xmlns:tmp","uri_tmp");
+$ct1->setAttribute("tmp:attr","val");
+$result = $ct1->getAttributeNS('uri_tmp',"attr") eq "val";
+$result = $result && $ct1->getAttributeNS('http://www.w3.org/2000/xmlns/',"tmp") eq "uri_tmp";
+$e->removeChild($ct1);
+print ( $result ? "ok $test\n" : "not ok $test\n");
+
+
+
+
+# # test get attributes
+# $test++;
+# $cx->setAttributes({ a =>"a1", 
+# 		     b => "b1", 
+# 		     c => "c1"});
+# my $attrs = $cx->getAttributes();
+# my $ok = $$attrs{a} eq "a1" && $$attrs{b} eq "b1" && $$attrs{c} eq "c1";
+# print ($ok ? "ok $test\n" : "not ok $test\n");
+
+# #test removeAttribute
+# $test++;
+# $cx->removeAttribute("c");
+# $attrs = $cx->getAttributes();
+# $ok = $$attrs{a} eq "a1" && $$attrs{b} eq "b1";
+# print ($ok ? "ok $test\n" : "not ok $test\n");
 
 # test xql
 $test++;
@@ -301,7 +430,7 @@ print ($ret eq "prefix: abcd" ? "ok $test\n" : "not ok $test\n");
 
 
 # cleanup code
-#print $doc->toString($sit), "\n";
+print $doc->toString($sit), "\n";
 $doc->freeDocument();
 undef $doc;
 undef $doc1;

@@ -1072,7 +1072,8 @@ SablotProcess(sheetURI, inputURI, resultURI, params, arguments, result)
 	}
 
        	RETVAL = SablotProcess(sheetURI, inputURI, resultURI, 
-		               params_ptr, args_ptr, &hoo);
+		               (const char**)params_ptr, 
+                               (const char**)args_ptr, &hoo);
 	if (params_ptr) free(params_ptr);
 	if (args_ptr) free(args_ptr);
 	result = hoo;
@@ -1175,7 +1176,8 @@ SablotRunProcessor(object, sheetURI, inputURI, resultURI, params, arguments)
 	}
 
        	RETVAL = SablotRunProcessor(processor, sheetURI, inputURI, resultURI, 
-		               params_ptr, args_ptr);
+                                    (const char**)params_ptr, 
+                                    (const char**)args_ptr);
 	if (params_ptr) free(params_ptr);
 	if (args_ptr) free(args_ptr);
 	OUTPUT:

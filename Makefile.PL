@@ -34,11 +34,12 @@
 use ExtUtils::MakeMaker;
 use English;
 use Config;
+use strict;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-$expat_libpath = '';
-$expat_incpath = '';
+my $expat_libpath = '';
+my $expat_incpath = '';
 
 my @replacement_args;
 
@@ -69,7 +70,7 @@ unless ($expat_libpath) {
   }
 
   unless ($found) {
-    die <<'Expat_Not_Installed;';
+      die <<'Expat_Not_Installed;';
 
 Expat must be installed prior to building XML::Sablotron and I can't find
 it in the standard library directories. You can download expat from:
@@ -94,8 +95,8 @@ Expat_Not_Installed;
 }
 
 #the same thing for sablotron
-$sablot_libpath = '';
-$sablot_incpath = '';
+my $sablot_libpath = '';
+my $sablot_incpath = '';
 
 @replacement_args = ();
 
@@ -168,11 +169,22 @@ foreach (@ARGV) {
 }
 @ARGV = @replacement_args;
 
-$js_libname = 'js' if $js_libpath && ! $js_libname;
+$js_libname = 'js' unless $js_libname;
 
-$libs = '';
+my $js_found = undef;
+unless ($js_libpath) {
+    # Test for existence of libexpat
+    foreach (split(/\s+/, $Config{libpth})) {
+	if (-f "$_/lib$js_libname." . $Config{so}) {
+	    $js_found = 1;
+	    last;
+	}
+    }
+}
 
-if ($js_libname || $js_libpath) {
+our $libs = '';
+
+if ($js_found || $js_libpath) {
     $libs = "-l$js_libname $libs" if $js_libname;
     $libs = "-L$js_libpath $libs" if $js_libpath;
 }
@@ -188,15 +200,27 @@ $libs = "-L$expat_libpath $libs"
 $libs = "-L$sablot_libpath $libs"
   if $sablot_libpath;
 
-$inc = "-I$expat_incpath"
+my $inc = "-I$expat_incpath"
   if $expat_incpath;
 $inc = "-I$sablot_incpath $inc"
   if $sablot_incpath;
 
+our @extras;
 push(@extras, INC => $inc) if $inc;
 
 push(@extras, CAPI => 'TRUE')
     if ($PERL_VERSION >= 5.005 and $OSNAME eq 'MSWin32');
+
+#analyze the ramining args
+@replacement_args = ();
+foreach (@ARGV) {
+    if (/^LIBS=(.*)/) {
+	$libs .= " $1";
+    } else {
+	push @replacement_args, $_;
+    }
+}
+@ARGV = @replacement_args;
 
 WriteMakefile(
 	      NAME	=> 'XML::Sablotron',

@@ -42,7 +42,7 @@ require DynaLoader;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.90';
+$VERSION = '0.97';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -96,6 +96,9 @@ sub new {
     bless $self, $class;
     my $foo = new XML::Sablotron::Processor();
     $self->{_processor} = $foo;
+    #used to keep references to trees passed in via AddArgTree
+    #needed for autodisposed trees
+    $self->{_trees} = []; 
     return $self;
 }
 
@@ -144,8 +147,9 @@ sub addArg {
 }
 
 sub addArgTree {
-    my $self = shift;
-    return $self->{_processor}->addArgTree(@_);
+    my ($self, $sit, $name, $tree) = @_;
+    push @{$self->{_trees}}, $tree;
+    return $self->{_processor}->addArgTree($sit, $name, $tree);
 }
 
 sub addParam {
@@ -340,7 +344,7 @@ sub RegHandler {
       if grep {${$_}[0] == $type and ${$_}[1] == $wrapper} 
 	@{$self->{_handlers}}; 
 
-    #the trick with @foo is very important for correct refernce counting
+    #the trick with @foo is very important for a correct refernce counting
     my @foo = ($type, $wrapper);
     push @{$self->{_handlers}}, \@foo;;
 
@@ -914,9 +918,10 @@ Like C<SetBase>, but given base URL is used only for specified scheme.
 
 =head2 setLog
 
-  $sab->setLog($filename);
+  $sab->setLog($filename, $level);
 
-This methods sets the log file name.
+This methods sets the log file name, and the log level. See L<Messages
+handler - overview> for details on log levels.
 
 =head2 clearError
 
