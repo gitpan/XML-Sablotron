@@ -16,7 +16,7 @@
 # Copyright (C) 1999-2000 Ginger Alliance Ltd. 
 # All Rights Reserved.
 # 
-# Contributor(s):
+# Contributor(s): Matt Sergeant
 # 
 # Alternatively, the contents of this file may be used under the
 # terms of the GNU General Public License Version 2 or later (the
@@ -32,220 +32,157 @@
 # 
 
 use ExtUtils::MakeMaker;
-use strict;
+use English;
+use Config;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-my %config;
+$expat_libpath = '';
+$expat_incpath = '';
 
-while($_ = shift) {
-    my ($key, $val) = split(/=/, $_, 2);
-    $config{$key} = $val;
+my @replacement_args;
+
+foreach (@ARGV) {
+  if (/^EXPAT(LIB|INC)PATH=(.+)/) {
+    if ($1 eq 'LIB') {
+      $expat_libpath = $2;
+    }
+    else {
+      $expat_incpath = $2;
+    }
+  }
+  else {
+    push(@replacement_args, $_);
+  }
 }
 
-my $DEBUG = delete $config{DEBUG};
+@ARGV = @replacement_args;
 
-if (delete $config{CHARLIE}) {
-    $config{LIBS} = "-L$ENV{CHARLIE_HOME}/lib -lsablot -lexpat";
-    $config{INC} = '-I$(CHARLIE_HOME)/include';
+unless ($expat_libpath) {
+  # Test for existence of libexpat
+  my $found = 0;
+  foreach (split(/\s+/, $Config{libpth})) {
+    if (-f "$_/libexpat." . $Config{so}) {
+      $found = 1;
+      last;
+    }
+  }
+
+  unless ($found) {
+    die <<'Expat_Not_Installed;';
+
+Expat must be installed prior to building XML::Sablotron and I can't find
+it in the standard library directories. You can download expat from:
+
+http://sourceforge.net/projects/expat/
+
+If expat is installed, but in a non-standard directory, then use the
+following options to Makefile.PL:
+
+    EXPATLIBPATH=...  To set the directory in which to find libexpat
+
+For example:
+
+    perl Makefile.PL EXPATLIBPATH=/home/me/lib EXPATINCPATH=/home/me/include
+
+Note that if you build against a shareable library in a non-standard location
+you may (on some platforms) also have to set your LD_LIBRARY_PATH environment
+variable at run time for perl to find the library.
+
+Expat_Not_Installed;
+  }
 }
 
-if ($^O eq 'MSWin32') {
-    $config{LIBS} ||= 'sablot.lib expat.lib';
-    $config{INC} ||= '';
+#the same thing for sablotron
+$sablot_libpath = '';
+$sablot_incpath = '';
 
-    if ($config{LIBS} !~ /sablot.lib/) {
-	$config{LIBS} .= ' sablot.lib';
-    }
-    
-    if ($config{LIBS} !~ /expat.lib/) {
-	$config{LIBS} .= ' expat.lib';
-    }
-} else {
-    $config{LIBS} ||= '-L/usr/local/lib -L/usr/lib -lsablot -lexpat';
-    $config{INC} ||= '-I/usr/local/include -I/usr/include';
+@replacement_args = ();
 
-    if ($config{LIBS} !~ /\-lsablot/) {
-	$config{LIBS} .= ' -lsablot';
+foreach (@ARGV) {
+  if (/^SABLOT(LIB|INC)PATH=(.+)/) {
+    if ($1 eq 'LIB') {
+      $sablot_libpath = $2;
     }
-    
-    if ($config{LIBS} !~ /\-lexpat/) {
-	$config{LIBS} .= ' -lexpat';
+    else {
+      $sablot_incpath = $2;
     }
+  }
+  else {
+    push(@replacement_args, $_);
+  }
 }
 
+@ARGV = @replacement_args;
 
-have_library('expat', 'main', '') || die <<DEATH;
-You do not appear to have libexpat in the library search path.
-Either install expat from http://expat.sourceforge.net/ or
-re-run as:
-  \$ $^X Makefile.PL LIBS='-L/path/to/expat/lib -lexpat -lsablot'
+unless ($sablot_libpath) {
+  # Test for existence of libexpat
+  my $found = 0;
+  foreach (split(/\s+/, $Config{libpth})) {
+    if (-f "$_/libsablot." . $Config{so}) {
+      $found = 1;
+      last;
+    }
+  }
 
-DEATH
+  unless ($found) {
+    die <<'Sablot_Not_Installed;';
 
-my $olibs;
-if ($^O eq 'MSWin32') {
-    $olibs = "expat.lib";
-} else {
-    $olibs = '-lexpat -lm';
+Sablot must be installed prior to building XML::Sablotron and I can't find
+it in the standard library directories. You can download Sablotron from:
+
+http://www.gingerall.cz
+
+If Sablotron is installed, but in a non-standard directory, then use the
+following options to Makefile.PL:
+
+    SABLOTLIBPATH=...  To set the directory in which to find libexpat
+
+    SABLOTINCPATH=...  To set the directory in which to find expat.h
+
+For example:
+
+    perl Makefile.PL SABLOTLIBPATH=/home/me/lib SABLOTINCPATH=/home/me/include
+
+Note that if you build against a shareable library in a non-standard location
+you may (on some platforms) also have to set your LD_LIBRARY_PATH environment
+variable at run time for perl to find the library.
+
+Sablot_Not_Installed;
+  }
 }
-have_library('sablot', 'main', $olibs) || die <<DEATH;
-You do not appear to have libsablot in the library search path.
-Either install sablotron from http://www.gingerall.com/ or
-re-run as:
-  \$ $^X Makefile.PL LIBS='-L/path/to/sablot/lib -lexpat -lsablot'
 
-DEATH
+$libs = "-lsablot -lexpat";
+unless ($^O eq 'MSWin32') {
+    $libs = "$libs -lm";
+}
+
+$libs = "-L$expat_libpath $libs"
+  if $expat_libpath;
+$libs = "-L$sablot_libpath $libs"
+  if $sablot_libpath;
+
+$inc = "-I$expat_incpath"
+  if $expat_incpath;
+$inc = "-I$sablot_incpath $inc"
+  if $sablot_incpath;
+
+push(@extras, INC => $inc) if $inc;
+
+push(@extras, CAPI => 'TRUE')
+    if ($PERL_VERSION >= 5.005 and $OSNAME eq 'MSWin32');
 
 WriteMakefile(
 	      NAME	=> 'XML::Sablotron',
+	      AUTHOR    => 'Pavel Hlavnicka (pavel@gingerall.cz)',
+	      ABSTRACT  => 'Sablotron XSLT processor wrapper',
 	      VERSION_FROM => 'Sablotron.pm', 
 	      DEFINE	=> '-DPERL_POLLUTE',
 	      clean     => {'FILES' => "log.xsl", },
 	      DIR       => [qw( Sablotron )],
-	      %config,
+	      LIBS      => $libs, 
+	      @extras,
 );
 
-use Config;
-use Symbol;
-
-use vars qw/$LINK/;
-
-BEGIN {
-    if ($^O eq 'MSWin32') {
-	$LINK = "$Config{cc} %s $Config{ldflags} conftest.c %s %s"
-    } else {
-	$LINK = "$Config{ld} -o conftest $Config{ccflags} -I$Config{incpath} %s $Config{ldflags} conftest.c %s %s";
-    }
-}
-
-sub rm_f {
-    my @files = @_;
-    my @realfiles;
-    foreach (@files) {
-        push @realfiles, glob($_);
-    }
-    if (@realfiles) {
-        chmod(0777, @realfiles);
-        unlink(@realfiles);
-    }
-}
-
-sub xsystem {
-    my $command = shift;
-    if ($DEBUG) {
-        print $command, "\n";
-        if (system($command) != 0) {
-            die "system call to '$command' failed";
-        }
-        return 1;
-    }
-    open(OLDOUT, ">&STDOUT");
-    open(OLDERR, ">&STDERR");
-    open(STDOUT, ">/dev/null");
-    open(STDERR, ">/dev/null");
-    my $retval = system($command);
-    open(STDOUT, ">&OLDOUT");
-    open(STDERR, ">&OLDERR");
-    if ($retval != 0) {
-        die "system call to '$command' failed";
-    }
-    return 1;
-}
-
-sub backtick {
-    my $command = shift;
-    if ($DEBUG) {
-        print $command, "\n";
-        my $results = `$command`;
-        chomp $results;
-        if ($? != 0) {
-            die "backticks call to '$command' failed";
-        }
-        return $results;
-    }
-    open(OLDOUT, ">&STDOUT");
-    open(OLDERR, ">&STDERR");
-    open(STDOUT, ">/dev/null");
-    open(STDERR, ">/dev/null");
-    my $results = `$command`;
-    my $retval = $?;
-    open(STDOUT, ">&OLDOUT");
-    open(STDERR, ">&OLDERR");
-    if ($retval != 0) {
-        die "backticks call to '$command' failed";
-    }
-    chomp $results;
-    return $results;
-}
-
-sub remove_l {
-    my $str = shift;
-    my @flds = split /\s+/, $str;
-    return join " ", grep {/^-L/} @flds;
-}
-
-sub try_link0 {
-    my ($src, $opt) = @_;
-    my $cfile = gensym();
-    open($cfile, ">conftest.c") || die "Cannot write to file conftest.c";
-    print $cfile $src;
-    close($cfile);
-    xsystem(sprintf($LINK, $config{INC}, remove_l($config{LIBS}), $opt));
-}
-
-sub try_link {
-    my $result = eval {
-        try_link0(@_);
-    };
-    warn $@ if $DEBUG && $@;
-    rm_f("conftest*");
-    return $result;
-}
-
-sub have_library {
-    my ($lib, $func, $other_libs) = @_;
-    printf("checking for %s() in -l%s... ", $func, $lib);
-
-    my $result;
-    if ($func) {
-        if ($^O eq 'MSWin32') {
-	    my $libs = "${lib}.lib $other_libs";
-            $result = try_link(<<"SRC", $libs);
-#include <windows.h>
-#include <winsock.h>
-int main() { return 0; }
-int t() { ${func}(); return 0; }
-SRC
-            unless ($result) {
-                $result = try_link(<<"SRC", $libs);
-#include <windows.h>
-#include <winsock.h>
-int main() { return 0; }
-int t() { void ((*p)()); p = (void ((*)()))${func}; return 0; }
-SRC
-            }
-        }
-        else {
-	    my $libs = "-l$lib $other_libs";
-            $result = try_link(<<"SRC", $libs);
-int main() { return 0; }
-int t() { ${func}(); return 0; }
-SRC
-        }
-    }
-
-    unless ($result) {
-        print "no\n";
-        return 0;
-    }
-
-    if ($func ne "main") {
-        $config{DEFINE} .= uc(" -Dhave_$func");
-    }
-
-    print "yes\n";
-    return 1;
-}
 
 __END__

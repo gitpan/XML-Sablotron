@@ -107,26 +107,25 @@ SV* __createNode(SablotSituation situa, SDOM_Node handle)
     HV* hash;
     SV* retval;
     SDOM_NodeType type;
-    /* check and/or create inner SV* - used for refcounting and validity */
+    /* check and/or create inner SV* - used for validity checks*/
     SV* inner = (SV*)SDOM_getNodeInstanceData(handle);
     if (!inner) {
-        //printf("+++> creating new inner\n");
+        /* printf("+++> creating new inner\n"); */
         inner = newSViv((int)handle);
-        sv_2mortal(inner);  //_fix_ test it
+        /* store inner SV to node */
+        SDOM_setNodeInstanceData(handle, inner);
     } else {
-        //printf("---> reusing the inner %d\n", SvIV(inner));
+        /* printf("---> reusing the inner %d\n", SvIV(inner)); */
     }
+    
     /* create new hash and store the handle into it */
     hash = newHV();
-    //printf("+++> storing %d\n", SvREFCNT(inner));
     hv_store(hash, "_handle", 7, SvREFCNT_inc(inner), 0);
-    //printf("+++> stored %d\n", SvREFCNT(inner));
     /* create blessed reference */
     retval = newRV_noinc((SV*)hash);
     DE( situa, SDOM_getNodeType(situa, handle, &type) );
     sv_bless(retval, gv_stashpv(__classNames[type], 0));
-    /* store inner SV to node */
-    SDOM_setNodeInstanceData(handle, inner);
+
     return retval;
 }
 
@@ -230,8 +229,11 @@ _clearInstanceData(object)
      SV*      object
      CODE:
      SV* inner =  *hv_fetch((HV*)SvRV(object), "_handle", 7, 0);
-     if (inner && SvIV(inner) && (SvREFCNT(inner) == 1) ) {
-         SDOM_setNodeInstanceData((SDOM_Node)SvIV(inner), NULL);
+     if (inner && (SvREFCNT(inner) == 2) ) {
+         /* I'm the last one owning the reference to inner handle */
+         SvREFCNT_dec(inner);
+         if ( SvIV(inner) )
+             SDOM_setNodeInstanceData((SDOM_Node)SvIV(inner), NULL);
          RETVAL = 1;
      } else {
          RETVAL = 0;
@@ -405,6 +407,24 @@ getNextSibling(object, ...)
      OUTPUT:
      RETVAL
 
+AV*
+getChildNodes(object, ...)
+     SV*      object
+     CODE:
+     SDOM_Node node = NODE_HANDLE(object);
+     SDOM_Node foo;
+     SV* sit = SIT_PARAM(2);
+     SablotSituation situa = SIT_SMART(sit);
+     CN( node );
+     RETVAL = (AV*)sv_2mortal( (SV*)newAV() );
+     DE( situa, SDOM_getFirstChild(situa, node, &foo) );
+     while ( foo ) {
+         av_push(RETVAL, __createNode(situa, foo));
+         DE( situa, SDOM_getNextSibling(situa, foo, &foo) );
+     }
+     OUTPUT:
+     RETVAL
+
 SV*
 getOwnerDocument(object, ...)
      SV*      object
@@ -453,7 +473,7 @@ appendChild(object, child, ...)
      DE( situa, SDOM_appendChild(situa, node, NODE_HANDLE(child)) );
 
 void
-removeChild(object, child, ...)
+_removeChild(object, child, ...)
      SV*      object
      SV*      child
      CODE:
@@ -463,8 +483,8 @@ removeChild(object, child, ...)
      CN(node);
      DE( situa, SDOM_removeChild(situa, node, NODE_HANDLE(child)) );
 
-SV*
-replaceChild(object, child, old, ...)
+void
+_replaceChild(object, child, old, ...)
      SV*      object
      SV*      child
      SV*      old
@@ -479,10 +499,6 @@ replaceChild(object, child, old, ...)
      oldnode = NODE_HANDLE(old);
      DE( situa, SDOM_replaceChild(situa, node, 
                            NODE_HANDLE(child), oldnode) );
-     RETVAL = old;
-     OUTPUT:
-     RETVAL
-
 
 AV*
 xql(object, expr, ...)
@@ -526,7 +542,6 @@ _new(object, sit)
      SDOM_Document doc;
      SablotSituation situa = SIT_SMART(sit);
      SablotCreateDocument(situa, &doc);
-     //printf("---> new documewnt handle is: %d\n", doc);
      RETVAL = __createNode(situa, doc);
      OUTPUT:
      RETVAL
@@ -538,7 +553,6 @@ _freeDocument(object, ...)
      SV* sit = SIT_PARAM(2);
      SablotSituation situa = SIT_SMART(sit);
      SDOM_Document doc = DOC_HANDLE(object);
-     //printf("---> calling SablotDestroyDocument: %d %d\n", situa, doc);
      SablotDestroyDocument(situa, doc);
 
 char*
@@ -803,7 +817,6 @@ _getAttributes(object, ...)
      DE( situa, SDOM_getAttributeList(situa, node, &list) );
      RETVAL = (AV*)sv_2mortal((SV*)newAV());
      SDOM_getNodeListLength(situa, list, &len);
-     //printf("--->  %d\n", len);
      for (i = 0; i < len; i++) {
          SDOM_Node node;
          SDOM_getNodeListItem(situa, list, i, &node);
@@ -813,3 +826,23 @@ _getAttributes(object, ...)
      OUTPUT:
      RETVAL
 
+char*
+toString(object, ...)
+     SV*      object
+     CODE:
+     SV* sit = SIT_PARAM(2);
+     char* buff;
+     SDOM_Document doc;
+     SablotSituation situa;
+     SDOM_Node node = NODE_HANDLE(object);
+     CN( node );
+     situa = SIT_SMART(sit);
+     SDOM_getOwnerDocument(situa, node, &doc);
+     CN( doc );
+     SablotLockDocument(situa, doc);
+     DE( situa, SDOM_nodeToString(situa, doc, node, (SDOM_char**)&buff) );
+     RETVAL = buff;
+     OUTPUT:
+     RETVAL
+     CLEANUP:
+     if (buff) SablotFree(buff);

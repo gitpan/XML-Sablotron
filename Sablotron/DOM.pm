@@ -16,7 +16,7 @@
 # Copyright (C) 1999-2000 Ginger Alliance Ltd.
 # All Rights Reserved.
 # 
-# Contributor(s):
+# Contributor(s): Albert.N.Micheev
 # 
 # Alternatively, the contents of this file may be used under the
 # terms of the GNU General Public License Version 2 or later (the
@@ -42,30 +42,19 @@ require XML::Sablotron;
 require Exporter;
 require DynaLoader;
 
-my @_constants = qw ( $ELEMENT_NODE $ATTRIBUTE_NODE $TEXT_NODE 
-		      $CDATA_SECTION_NODE $ENTITY_REFERENCE_NODE
-		      $ENTITY_NODE $PROCESSING_INSTRUCTION_NODE
-		      $COMMENT_NODE $DOCUMENT_NODE $DOCUMENT_TYPE_NODE
-		      $DOCUMENT_FRAGMENT_NODE $NOTATION_NODE 
+my @_constants = qw ( ELEMENT_NODE ATTRIBUTE_NODE TEXT_NODE 
+		      CDATA_SECTION_NODE ENTITY_REFERENCE_NODE
+		      ENTITY_NODE PROCESSING_INSTRUCTION_NODE
+		      COMMENT_NODE DOCUMENT_NODE DOCUMENT_TYPE_NODE
+		      DOCUMENT_FRAGMENT_NODE NOTATION_NODE 
 		      
-		      $SDOM_OK $INDEX_SIZE_ERR $HIERARCHY_ERR 
-		      $WRONG_DOCUMENT_ERR $NO_MODIFICATION_ALLOWED_ERR
-		      $NOT_FOUND_ERR $INVALID_NODE_TYPE_ERR
-		      $QUERY_PARSE_ERR $QUERY_EXECUTION_ERR $NOT_OK );
+		      SDOM_OK INDEX_SIZE_ERR HIERARCHY_ERR 
+		      WRONG_DOCUMENT_ERR NO_MODIFICATION_ALLOWED_ERR
+		      NOT_FOUND_ERR INVALID_NODE_TYPE_ERR
+		      QUERY_PARSE_ERR QUERY_EXECUTION_ERR NOT_OK );
 
-use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK @EXPORT $VERSION
-	    $ELEMENT_NODE $ATTRIBUTE_NODE $TEXT_NODE 
-	    $CDATA_SECTION_NODE $ENTITY_REFERENCE_NODE
-	    $ENTITY_NODE $PROCESSING_INSTRUCTION_NODE
-	    $COMMENT_NODE $DOCUMENT_NODE $DOCUMENT_TYPE_NODE
-	    $DOCUMENT_FRAGMENT_NODE $NOTATION_NODE $OTHER_NODE
-	    
-	    $SDOM_OK $INDEX_SIZE_ERR $HIERARCHY_ERR 
-	    $WRONG_DOCUMENT_ERR $NO_MODIFICATION_ALLOWED_ERR
-	    $NOT_FOUND_ERR $INVALID_NODE_TYPE_ERR
-	    $QUERY_PARSE_ERR $QUERY_EXECUTION_ERR $NOT_OK 
+use vars qw(@ISA %EXPORT_TAGS @EXPORT_OK @EXPORT
 	   );
-
 @ISA = qw(Exporter DynaLoader);
 
 # Items to export into callers namespace by default. Note: do not export
@@ -90,37 +79,35 @@ my @_functions = qw ( parse
 
 @EXPORT = qw(createNode);
 
-$VERSION = '0.61';
-
 #constants for node types
-$ELEMENT_NODE = 1;
-$ATTRIBUTE_NODE = 2;
-$TEXT_NODE = 3;
-$CDATA_SECTION_NODE = 4;
-$ENTITY_REFERENCE_NODE = 5;
-$ENTITY_NODE = 6;
-$PROCESSING_INSTRUCTION_NODE = 7;
-$COMMENT_NODE = 8;
-$DOCUMENT_NODE = 9;
-$DOCUMENT_TYPE_NODE = 10;
-$DOCUMENT_FRAGMENT_NODE = 11;
-$NOTATION_NODE = 12;
-$OTHER_NODE = 13; #not in spec
+use constant ELEMENT_NODE => 1;
+use constant ATTRIBUTE_NODE => 2;
+use constant TEXT_NODE => 3;
+use constant CDATA_SECTION_NODE => 4;
+use constant ENTITY_REFERENCE_NODE => 5;
+use constant ENTITY_NODE => 6;
+use constant PROCESSING_INSTRUCTION_NODE => 7;
+use constant COMMENT_NODE => 8;
+use constant DOCUMENT_NODE => 9;
+use constant DOCUMENT_TYPE_NODE => 10;
+use constant DOCUMENT_FRAGMENT_NODE => 11;
+use constant NOTATION_NODE => 12;
+use constant OTHER_NODE => 13; #not in spec
 
 #constants for error codes
-$SDOM_OK = 0;
-$INDEX_SIZE_ERR = 1;
-$HIERARCHY_ERR = 3;
-$WRONG_DOCUMENT_ERR = 4;
-$NO_MODIFICATION_ALLOWED_ERR = 7;
-$NOT_FOUND_ERR = 8;
-$INVALID_NODE_TYPE_ERR = 9;
-$QUERY_PARSE_ERR = 10;
-$QUERY_EXECUTION_ERR = 11;
-$NOT_OK = 12;
+use constant SDOM_OK => 0;
+use constant INDEX_SIZE_ERR => 1;
+use constant HIERARCHY_ERR => 3;
+use constant WRONG_DOCUMENT_ERR => 4;
+use constant NO_MODIFICATION_ALLOWED_ERR => 7;
+use constant NOT_FOUND_ERR => 8;
+use constant INVALID_NODE_TYPE_ERR => 9;
+use constant QUERY_PARSE_ERR => 10;
+use constant QUERY_EXECUTION_ERR => 11;
+use constant NOT_OK => 12;
 
 # executable prt of the module
-bootstrap XML::Sablotron::DOM $VERSION;
+bootstrap XML::Sablotron::DOM $XML::Sablotron::VERSION;
 
 1;
 
@@ -130,6 +117,18 @@ package XML::Sablotron::DOM::Node;
 sub equals {
     my ($self, $other) = @_;
     return $self->{_handle} == $other->{_handle};
+}
+
+sub removeChild {
+    my ($self, $child, $sit) = @_;
+    $self->_removeChild($child, $sit);
+    return $child;
+}
+
+sub replaceChild {
+    my ($self, $new, $old, $sit) = @_;
+    $self->_replaceChild($new, $old, $sit);
+    return $old;
 }
 
 sub DESTROY {
@@ -163,7 +162,6 @@ sub new {
 sub freeDocument {
     my ($self) = @_;
     $self->_freeDocument() if $self->{_handle};
-    $self->{_handle} = undef;
 }
 
 #to avoid namespace conflict with JavaScript built-in
@@ -179,10 +177,8 @@ sub autodispose {
 
 sub DESTROY {
     my $self = shift;
-    my $foo = $self->_clearInstanceData() if $self->{_handle};
-    if ($foo && $self->{_autodispose}) {
-	$self->freeDocument();
-    }
+    $self->freeDocument() if $self->{_autodispose};
+    my $foo = $self->_clearInstanceData();
 }
 
 #################### Element ####################
@@ -334,7 +330,8 @@ document, if you want. Use
 
   $doc->freeDocument($sit);
 
-to to it.
+to to it. Another way is to use the autodispode feature (see the
+documentation for the method autodispose and document constructor).
 
 If you will try to access the node, which was previously disposed by
 Sablotron (perhaps with the all tree), your Perl code will die with
@@ -364,16 +361,16 @@ Constants are defined for:
 
 =item * node types
 
-C<$ELEMENT_NODE, $ATTRIBUTE_NODE, $TEXT_NODE, $CDATA_SECTION_NODE,
-$ENTITY_REFERENCE_NODE, $ENTITY_NODE, $PROCESSING_INSTRUCTION_NODE,
-$COMMENT_NODE, $DOCUMENT_NODE, $DOCUMENT_TYPE_NODE,
-$DOCUMENT_FRAGMENT_NODE, $NOTATION_NODE, $OTHER_NODE>
+C<ELEMENT_NODE, ATTRIBUTE_NODE, TEXT_NODE, CDATA_SECTION_NODE,
+ENTITY_REFERENCE_NODE, ENTITY_NODE, PROCESSING_INSTRUCTION_NODE,
+COMMENT_NODE, DOCUMENT_NODE, DOCUMENT_TYPE_NODE,
+DOCUMENT_FRAGMENT_NODE, NOTATION_NODE, OTHER_NODE>
 
 =item * exception codes
 
-C<$SDOM_OK, $INDEX_SIZE_ERR, $HIERARCHY_ERR, $WRONG_DOCUMENT_ERR,
-$NO_MODIFICATION_ALLOWED_ERR, $NOT_FOUND_ERR, $INVALID_NODE_TYPE_ERR,
-$QUERY_PARSE_ERR, $QUERY_EXECUTION_ERR, $NOT_OK>
+C<SDOM_OK, INDEX_SIZE_ERR, HIERARCHY_ERR, WRONG_DOCUMENT_ERR,
+NO_MODIFICATION_ALLOWED_ERR, NOT_FOUND_ERR, INVALID_NODE_TYPE_ERR,
+QUERY_PARSE_ERR, QUERY_EXECUTION_ERR, NOT_OK>
 
 =back
 
@@ -676,6 +673,22 @@ The situation to be used (optional).
 
 =back
 
+=head2 getChildNodes
+
+Returns the reference to the array of all child nodes of given node.
+
+B<Synopsis:>
+
+  $node->getChildNodes([$situa]);
+
+=over 4
+
+=item $situa
+
+The situation to be used (optional).
+
+=back
+
 =head2 getOwnerDocument
 
 Returns the document owning the node. It is always the document, which
@@ -865,6 +878,41 @@ The situation to be used (optional).
 =head1 XML::Sablotron::DOM::Document
 
 Represents the whole DOM document (the "/" root element).
+
+=head2 new
+
+Create the new empty document.
+
+B<Synopsis:>
+
+  $doc = XML::Sablotron::DOM::Document->new([AUTODISPOSE => $ad]);
+
+=over 4
+
+=item $ad
+
+Specifies if the document is to be deleted after the last Perl
+reference is dropped,
+
+=back
+
+=head2 autodispose
+
+Reads or set the autodispose flag, This flag causes, that the document
+is destroyed after the last Perl reference is undefined.
+
+B<Synopsis:>
+
+  $doc->autodispose([$ad]);
+
+=over 4
+
+=item $ad
+
+Specifies if the document is to be deleted after the last Perl
+reference is dropped,
+
+=back
 
 =head2 freeDocument
 
@@ -1111,6 +1159,22 @@ The situation to be used (optional).
 =item $name
 
 The name of attribute to be removed.
+
+=item $situa
+
+The situation to be used (optional).
+
+=back
+
+=head2 toString
+
+Serializes the element and its subtree into the string representation.
+
+B<Synopsis:>
+
+  $e->toString([$situa])
+
+=over 4
 
 =item $situa
 
