@@ -47,7 +47,7 @@ use XML::Sablotron::Situation;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '0.98';
+$VERSION = '1.01';
 
 my @functions = qw (
 SablotProcessStrings 
@@ -94,7 +94,7 @@ sub SablotProcess {
 #sub SablotUnregMessageHandler {
 #    UnregMessageHandler(@_);
 
-sub new (@_) {
+sub new (@) {
     my $class = shift;
     $class = (ref $class) || $class;
     my $self = {};

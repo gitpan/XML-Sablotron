@@ -313,6 +313,7 @@ $test++;
 $e->appendChild($doc->createElementNS("uri_a","a:name"));
 print ($e->lastChild()->nodeName() eq "a:name" ? "ok $test\n" : "not ok $test\n");
 
+
 # test namespaceURI
 $test++;
 print ($e->lastChild()->namespaceURI() eq "uri_a" ? "ok $test\n" : "not ok $test\n");
@@ -430,7 +431,7 @@ print ($ret eq "prefix: abcd" ? "ok $test\n" : "not ok $test\n");
 
 
 # cleanup code
-print $doc->toString($sit), "\n";
+#print $doc->toString($sit), "\n";
 $doc->freeDocument();
 undef $doc;
 undef $doc1;

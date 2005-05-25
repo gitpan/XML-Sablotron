@@ -397,7 +397,7 @@ int SchemeHandlerGetStub(void *userData, void *processor,
     else
       XPUSHs(&sv_undef);
     XPUSHs((SV*)handle);
-    XPUSHs(sv_2mortal(newSViv(*byteCount - 1)));
+    XPUSHs(sv_2mortal(newSViv(*byteCount)));
     PUTBACK;
 
     perl_call_sv((SV*)GvCV(gv), G_SCALAR);
@@ -409,7 +409,7 @@ int SchemeHandlerGetStub(void *userData, void *processor,
       char *aux;
       aux = SvPV(value, len);
       *byteCount = len < *byteCount ? len : *byteCount;
-      strncpy(buffer, aux, *byteCount + 1);
+      strncpy(buffer, aux, *byteCount);
     } else {
       *byteCount = 0;
     }

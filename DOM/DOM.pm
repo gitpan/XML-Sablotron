@@ -259,7 +259,8 @@ sub freeDocument {
 
 #to avoid namespace conflict with JavaScript built-in
 sub _toString {
-    return toString(@_);
+    my ($self,@args) = @_;
+    return $self->toString(@args);
 }
 
 sub autodispose {

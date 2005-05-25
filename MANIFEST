@@ -33,3 +33,4 @@ lib/XML/Sablotron/Situation/DOMHandlerDispatcher.pm
 t/dom.t
 t/domHandler.t
 t/sablot.t
+META.yml                                 Module meta-data (added by MakeMaker)
