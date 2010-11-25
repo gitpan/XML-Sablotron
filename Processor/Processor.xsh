@@ -107,7 +107,7 @@ SablotRunProcessor(object, sheetURI, inputURI, resultURI, params, arguments)
 	processor = GET_PROCESSOR(object);
 
 	if (SvOK(params)) {
-	  if (! SvROK(params) || !(SvFLAGS(params) & SVt_PVAV))
+	  if (! SvROK(params) || SvTYPE(SvRV(params)) != SVt_PVAV)
 	    croak("4-th argument to SablotProcess has to be ARRAYREF");
           params_av = (AV*)SvRV(params);
           size = av_len(params_av) + 1;
@@ -122,7 +122,7 @@ SablotRunProcessor(object, sheetURI, inputURI, resultURI, params, arguments)
 	}
 
 	if (SvOK(arguments)) {
-	  if (! SvROK(arguments) || !(SvFLAGS(arguments) & SVt_PVAV))
+	  if (! SvROK(arguments) || SvTYPE(SvRV(arguments)) != SVt_PVAV)
 	    croak("5-th argument to SablotProcess has to be ARRAYREF");
 	  args_av = (AV*)SvRV(arguments);
 	  size = av_len(args_av) + 1;

@@ -1,5 +1,28 @@
 Revision history for Perl extension Sablotron.
 
+1.0100001 Thu Nov 25 03:58:38 CET 2010
+        -  fixed bug reported at 19 Jan 2008:
+
+            XML::Sablotron fails with messages like:
+
+               4-th argument to SablotProcess has to be ARRAYREF
+
+            even when arrayrefs are passed. The reason is the bogus check for an arrayref
+            in at least Processor.xsh and Sablotron.xs:
+
+                if (! SvROK(arguments) || !(SvFLAGS(arguments) & SVt_PVAV))
+
+            first, this checks FLAGS of the reference itself, and secondly the &
+            operation does very little to compare the values.
+
+            The correct check should be:
+                                        
+                if (! SvROK(arguments) || SvTYPE(SvRV(arguments)) != SVt_PVAV)
+
+            and indeed it works when this is used.
+
+(releases after 1.01 done by Marc Lehmann <sablotron@plan9.de>).
+
 0.98 
 	- SXP DOMHandler interface added
 	- module layout reorganized

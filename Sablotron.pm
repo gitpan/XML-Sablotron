@@ -47,7 +47,7 @@ use XML::Sablotron::Situation;
 
 @ISA = qw( Exporter DynaLoader );
 
-$VERSION = '1.01';
+$VERSION = '1.0100001';
 
 my @functions = qw (
 SablotProcessStrings 
